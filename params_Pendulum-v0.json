@@ -3,7 +3,7 @@
 		"scale": [5e-2, 5e-2, 5e-2]},
 
 	"params_constraints": {"min_std_noise": 1e-3, "max_std_noise": 3e-1, "min_outputscale":  1e-3, "max_outputscale": 0.95,
-                    "min_lengthscale":  4e-3, "max_lengthscale": 10.0},
+                    "min_lengthscale":  4e-3, "max_lengthscale": 5.0},
 	"params_controller": {"target": [1, 0.0, 0.0], "weights_target": [1, 0, 0], "weights_target_terminal_cost": [5, 0, 0],
 							"s_observation": [1e-6, 1e-6, 1e-6], "len_horizon": 15, "exploration_factor": 2,
 							"limit derivative actions": 0, "max derivative actions norm": 0.25},

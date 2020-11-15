@@ -4,6 +4,7 @@ import os
 import numpy as np
 import gym
 import json
+from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
 from control_objects.probabilistic_gp_mpc_controller import ProbabiliticGpMpcController
 
@@ -26,6 +27,8 @@ def main():
 	params_init = params_json_env['params_init']
 	params_memory = params_json_env['params_memory']
 	env = gym.make(env_to_control)
+	if params_general['save_render_env']:
+		rec = VideoRecorder(env, path=os.path.join('folder_save', env_to_control, 'anim.mp4'))
 	env.reset()
 	target = np.array(params_controller['target'])
 	weights_target = np.diag(params_controller['weights_target'])
@@ -41,11 +44,14 @@ def main():
 		control_object.action = np.random.uniform(0, 1)
 		action = env.action_space.low + (env.action_space.high - env.action_space.low) * control_object.action
 		new_observation, reward, done, info = env.step(action)
+
 		if params_general['render_env']:
 			try:
 				env.render()
 			except:
 				pass
+		if params_general['save_render_env']:
+			rec.capture_frame()
 		control_object.add_point_memory(observation, action, new_observation, reward)
 		observation = new_observation
 
@@ -66,6 +72,8 @@ def main():
 				env.render()
 			except:
 				pass
+		if params_general['save_render_env']:
+			rec.capture_frame()
 
 		if params_general['save_plot_history'] and \
 				(control_object.num_points_memory % params_general["frequency_iter_save"] == 0):

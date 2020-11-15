@@ -30,6 +30,7 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		self.exploration_factor = params_controller['exploration_factor']
 		self.lr_train = params_train['lr_train']
 		self.num_iter_train = params_train['n_iter_train']
+		self.clip_grad_value = params_train['clip_grad_value']
 		self.train_every_n_points = params_train['train_every_n_points']
 		self.print_train = params_train['print_train']
 		self.step_print_train = params_train['step_print_train']
@@ -118,7 +119,8 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			self.models[0].train_inputs[0],
 			[model.train_targets for model in self.models],
 			[model.state_dict() for model in self.models],
-			self.constraints, self.lr_train, self.num_iter_train, self.print_train,  self.step_print_train))
+			self.constraints, self.lr_train, self.num_iter_train, self.clip_grad_value,
+			self.print_train,  self.step_print_train))
 			self.p_train.start()
 			self.num_cores_main -= 1
 
@@ -372,8 +374,8 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			self.num_cores_main -= 1
 
 	@staticmethod
-	def train(queue, train_inputs, train_targets, parameters, constraints, lr_train, num_iter_train, print_train=0,
-			step_print_train=25):
+	def train(queue, train_inputs, train_targets, parameters, constraints, lr_train, num_iter_train, clip_grad_value,
+			print_train=0, step_print_train=25):
 		with threadpool_limits(limits=1, user_api='blas'), threadpool_limits(limits=1, user_api='openmp'):
 			torch.set_num_threads(1)
 			start_time = time.time()
@@ -445,7 +447,7 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 							output = models[model_idx](models[model_idx].train_inputs[0])
 							# Calc loss and backprop gradients
 							loss = -mll(output, models[model_idx].train_targets)
-							# torch.nn.utils.clip_grad_value_(models[model_idx].parameters(), clip_grad_value)
+							torch.nn.utils.clip_grad_value_(models[model_idx].parameters(), clip_grad_value)
 							loss.backward()
 							if print_train:
 								if i % step_print_train == 0:
