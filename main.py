@@ -55,7 +55,7 @@ def main():
 		control_object.add_point_memory(observation, action, new_observation, reward)
 		observation = new_observation
 
-	while True:
+	for index_iter in range(params_general['num_steps_env'] - params_init['num_random_actions_init']):
 		time_start = time.time()
 
 		action, add_info_dict = control_object.compute_prediction_action(observation, s_observation)
@@ -91,6 +91,8 @@ def main():
 			control_object.render_plot_model3d()
 
 		print("time loop: " + str(time.time() - time_start) + " s\n")
+
+	rec.close()
 
 
 if __name__ == '__main__':
