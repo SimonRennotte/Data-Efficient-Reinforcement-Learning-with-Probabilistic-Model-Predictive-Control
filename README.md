@@ -40,7 +40,9 @@ Compared to the implementation described in the papers above, the scripts have b
 - The function optimized is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
 
 -The controller in action:
+
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim.gif?)
+
 Two visualisations allow to see the progress of learning:
 - An history plot, which plot the relevant informations in function of the number of iteration, which can be seen on the following figure:
 
