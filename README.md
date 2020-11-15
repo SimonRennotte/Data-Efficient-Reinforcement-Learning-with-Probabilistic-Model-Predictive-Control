@@ -39,6 +39,8 @@ Compared to the implementation described in the papers above, the scripts have b
 - An option has been added to decide to include a point in the memory of the gps depending on the prediction error at that point and the predicted uncertainty
 - The function optimized is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
 
+-The controller in action:
+![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim.gif?)
 Two visualisations allow to see the progress of learning:
 - An history plot, which plot the relevant informations in function of the number of iteration, which can be seen on the following figure:
 
