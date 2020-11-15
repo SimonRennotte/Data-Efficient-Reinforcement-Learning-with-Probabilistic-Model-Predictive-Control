@@ -28,8 +28,8 @@ def save_plot_history_process(states, actions, states_next, prediction_info_over
 		predictions_std_over_time_show = np.zeros_like(states_next)
 		predictions_std_over_time_show[indexes_control] = \
 			[prediction[0].numpy() for prediction in prediction_info_over_time['predicted states std']]
-		mean_cost_traj = np.array([element.numpy() for element in prediction_info_over_time['mean cost trajectory']])
-		mean_cost_traj_std = np.array([element.numpy() for element in prediction_info_over_time['mean cost trajectory std']])
+		mean_cost_traj = np.array([element for element in prediction_info_over_time['mean cost trajectory']])
+		mean_cost_traj_std = np.array([element for element in prediction_info_over_time['mean cost trajectory std']])
 
 		for state_idx in range(len(states[0])):
 			axes[0][0].plot(indexes, np.array(states)[:, state_idx], label='s' + str(state_idx),
@@ -40,7 +40,7 @@ def save_plot_history_process(states, actions, states_next, prediction_info_over
 				label='p_2std' + str(state_idx),
 				color=plt.get_cmap('tab20').colors[2 * state_idx + 1], alpha=0.6)
 		axes[1][1].plot(indexes_control,
-			np.array([element.numpy() for element in prediction_info_over_time['cost']]), label='cost', color='k')
+			np.array([element for element in prediction_info_over_time['cost']]), label='cost', color='k')
 		axes[1][1].plot(indexes_control, mean_cost_traj, label='cost trajectory', color='orange')
 		axes[1][1].fill_between(indexes_control, mean_cost_traj - 2 * mean_cost_traj_std,
 			mean_cost_traj + 3 * mean_cost_traj_std, label='cost trajectory 3 std', alpha=0.6)
@@ -169,7 +169,7 @@ def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targ
 						input_data[1:, best_features[0]] - input_data[:-1, best_features[0]],
 						input_data[1:, best_features[1]] - input_data[:-1, best_features[1]],
 						output_data[1:, index_observation_represent] - output_data[:-1, index_observation_represent],
-						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.8)
+						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
 
 				surf2 = axes[subplot_idx + total_col_max].contour3D(x_grid, y_grid, z_grid_std, n_ticks, cmap='cool')
 				axes[subplot_idx + total_col_max].set_xlabel('State ' + str(best_features[0]), fontsize=fontsize, rotation=150)
@@ -196,7 +196,7 @@ def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targ
 						input_data[1:, best_features[0]] - input_data[:-1, best_features[0]],
 						input_data[1:, best_features[1]] - input_data[:-1, best_features[1]],
 						errors[1:] - errors[:-1],
-						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.8)
+						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
 
 			plt.tight_layout()
 			year = datetime.datetime.now().year

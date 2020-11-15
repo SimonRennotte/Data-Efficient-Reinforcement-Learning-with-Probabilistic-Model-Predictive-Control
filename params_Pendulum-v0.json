@@ -5,13 +5,13 @@
 	"params_constraints": {"min_std_noise": 1e-3, "max_std_noise": 3e-1, "min_outputscale":  1e-3, "max_outputscale": 0.95,
                     "min_lengthscale":  4e-3, "max_lengthscale": 10.0},
 	"params_controller": {"target": [1, 0.0, 0.0], "weights_target": [1, 0, 0], "weights_target_terminal_cost": [5, 0, 0],
-							"s_observation": [1e-6, 1e-6, 1e-6], "len_horizon": 15, "exploration_factor": 3,
+							"s_observation": [1e-6, 1e-6, 1e-6], "len_horizon": 15, "exploration_factor": 2,
 							"limit derivative actions": 0, "max derivative actions norm": 0.25},
 	"params_train": {"lr_train": 7e-3, "n_iter_train": 15, "train_every_n_points": 25, "clip_grad_value": 1e-3,
 					"print_train": 0, "step_print_train": 100},
 	"params_init": {"num_random_actions_init":  30},
 	"params_actions_optimizer": {"disp": null, "maxcor": 10, "ftol": 1e-4, "gtol": 1e-6, "eps": 1e-2, "maxfun": 30,
-									"maxiter": 10, "iprint": -1, "maxls": 15, "finite_diff_rel_step": null},
+									"maxiter": 10, "iprint": -1, "maxls": 10, "finite_diff_rel_step": null},
 	"params_memory": {"min error prediction prop for storage":  [1e-3, 1e-3, 1e-3],
 						"min prediction std prop for storage":  [1.5e-3, 1.5e-3, 1.5e-3]}
 }
