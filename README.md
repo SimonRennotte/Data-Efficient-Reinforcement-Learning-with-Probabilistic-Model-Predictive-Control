@@ -1,7 +1,7 @@
 # Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
 Implementation of the paper Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control
 
-![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
+![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 Abstract:
 Trial-and-error based reinforcement learning (RL) has seen rapid advancementsin recent times, especially with the advent of deep neural networks. 
@@ -42,12 +42,12 @@ Compared to the implementation described in the papers above, the scripts have b
 Two visualisations allow to see the progress of learning:
 - An history plot, which plot the relevant informations in function of the number of iteration, which can be seen on the following figure:
 
-![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_example.png?raw=true)
+![histories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_example.png?raw=true)
 The cost of the trajectory is the mean predicted cost on the horizon, obtained by the model following the actions of the mpc
 
 - A 3d visualisation of the model predictions and the points in memory. 
 
-![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_3d_example.png?raw=true)
+![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_3d_example.png?raw=true)
 Each of the graphs represented on the upper row represents the variation of the state in function of the inputs state. 
 The axis of the 3d plot are chosen to represent the two inputs with the lowest lengthscales in the model, so the x-y axes are different for the different state predictions.
 The graphs represented on the lower row represent the predicted uncertainty, and the points are the prediction errors.
@@ -55,7 +55,7 @@ The points stored in the memory of the gaussian process model are represented in
 Note that the uncertainty represented in the 3d plot do not represent the uncertainty on the points, since the last dimension is not visible and has been set using linear regression fo the visible states input
 
 These models are obtained without using any paramterics models. The only prior used is in the initializations values of the hyper-parameters of the gaussian process.
-Yet, the control is stabilized most of the time after 100 iterations, with 30 iterations being random actions.
+Yet, the control is stabilized most of the time before 100 iterations, with 30 iterations being random actions.
 
 Dynamic vizualizations of the 3d update model and history plots are coming soon
 
