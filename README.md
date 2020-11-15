@@ -50,7 +50,7 @@ The cost of the trajectory is the mean predicted cost on the horizon, obtained b
 
 - A 3d visualisation of the model predictions and the points in memory. 
 
-![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_3d_example.png?raw=true)
+![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_example.png?raw=true)
 Each of the graphs represented on the upper row represents the variation of the state in function of the inputs state. 
 The axis of the 3d plot are chosen to represent the two inputs with the lowest lengthscales in the model, so the x-y axes are different for the different state predictions.
 The graphs represented on the lower row represent the predicted uncertainty, and the points are the prediction errors.
