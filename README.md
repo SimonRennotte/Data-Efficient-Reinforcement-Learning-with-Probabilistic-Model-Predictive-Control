@@ -1,6 +1,7 @@
 # Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
 Implementation of the paper Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control
-![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_inverted_pendulum.jpg?raw=true)
+
+![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 Abstract:
 Trial-and-error based reinforcement learning (RL) has seen rapid advancementsin recent times, especially with the advent of deep neural networks. 
@@ -15,13 +16,17 @@ We provide theoretical guarantees for the first-order optimalityin the GP-based 
 The proposed framework demonstrates superior data efficiency and learning rates compared to the current state of the art.
 
 The papers used for the model are:
+
 https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
+
 https://deepai.org/publication/data-efficient-reinforcement-learning-with-probabilistic-model-predictive-control
+
 https://deisenroth.cc/pdf/thesis.pdf
 
 The following videos will allow to understand the concepts more quickly:
 
 https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
+
 https://www.youtube.com/watch?v=AVdx2hbcsfI
 
 The implementation is not complete yet. The analytical derivates of the fmm and lmm functions have yet to be computed to speed up the actions optimizations, 
@@ -36,10 +41,13 @@ Compared to the implementation described in the papers above, the scripts have b
 
 Two visualisations allow to see the progress of learning:
 - An history plot, which plot the relevant informations in function of the number of iteration, which can be seen on the following figure:
-![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_inverted_pendulum.jpg?raw=true)
+
+![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_example.png?raw=true)
 The cost of the trajectory is the mean predicted cost on the horizon, obtained by the model following the actions of the mpc
+
 - A 3d visualisation of the model predictions and the points in memory. 
-![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_3d_inverted_pendulum.jpg?raw=true)
+
+![alt text](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_3d_example.png?raw=true)
 Each of the graphs represented on the upper row represents the variation of the state in function of the inputs state. 
 The axis of the 3d plot are chosen to represent the two inputs with the lowest lengthscales in the model, so the x-y axes are different for the different state predictions.
 The graphs represented on the lower row represent the predicted uncertainty, and the points are the prediction errors.
