@@ -19,17 +19,17 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 ## Table of contents
-  - [Experiments](##Experiments)
-    - [Pendulum-v0](###Pendulum-v0)
-  - [Methodology](##Methodology)
-  - [Limitations](##Limitations)
-  - [Installation](##Installation)
-  - [How to run](##How to run)
-  - [Ressources](##Ressources)
-    - [Talks/Tutorials](###Talks/Tutorials)
-    - [Papers](###Papers)
-    - [Textbooks](###Textbooks)
-    - [Other projects](###Other projects)
+  * [Experiments](##Experiments)
+    * [Pendulum-v0](###Pendulum-v0)
+  * [Methodology](##Methodology)
+  * [Limitations](##Limitations)
+  * [Installation](##Installation)
+  * [How to run](##How to run)
+  * [Ressources](##Ressources)
+    * [Talks/Tutorials](###Talks/Tutorials)
+    * [Papers](###Papers)
+    * [Textbooks](###Textbooks)
+    * [Other projects](###Similar projects)
     
 ## Experiments
 ### Pendulum-v0
@@ -103,7 +103,7 @@ https://deisenroth.cc/pdf/thesis.pdf
 
 http://www.gaussianprocess.org/gpml/
 
-## Other similar projects
+## Similar projects
 
 https://github.com/nrontsis/PILCO
 
