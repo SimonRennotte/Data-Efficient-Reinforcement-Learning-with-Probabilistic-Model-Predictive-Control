@@ -1,8 +1,9 @@
 # Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim.gif?)
+
 Example of control algorithm learning from scratch in less than 100 interaction with the environment
 ## Overview
-Implementation of the paper [!Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control](https://arxiv.org/pdf/1706.06491v1.pdf) with pytorch and gpytorch.
+Implementation of the paper [Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control](https://arxiv.org/pdf/1706.06491v1.pdf) with pytorch and gpytorch.
 
 Trial-and-error based reinforcement learning (RL) has seen rapid advancements in recent times, especially with the advent of deep neural networks. 
 However, the majority of autonomous RL algorithms either rely on engineered features or a large number of interactions with the environment. 
@@ -18,13 +19,13 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 ## Table of contents
-  *[Experiments](##Experiments)
+  - [Experiments](##Experiments)
     - [Pendulum-v0](###Pendulum-v0)
-  *[Methodology](##Methodology)
-  *[Limitations](##Limitations)
-  *[Installation](##Installation)
-  *[How to run](##How to run)
-  *[Ressources](##Ressources)
+  - [Methodology](##Methodology)
+  - [Limitations](##Limitations)
+  - [Installation](##Installation)
+  - [How to run](##How to run)
+  - [Ressources](##Ressources)
     - [Talks/Tutorials](###Talks/Tutorials)
     - [Papers](###Papers)
     - [Textbooks](###Textbooks)
