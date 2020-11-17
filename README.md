@@ -1,7 +1,7 @@
 # Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim.gif?)
 
-Example of control algorithm learning from scratch in less than 100 interaction with the environment
+Example of control algorithm learning from scratch in less than 100 interactions with the environment
 ## Overview
 Implementation of the paper [Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control](https://arxiv.org/pdf/1706.06491v1.pdf) with pytorch and gpytorch.
 
@@ -24,15 +24,18 @@ The proposed framework demonstrates superior data efficiency and learning rates 
   * [Methodology](##Methodology)
   * [Limitations](##Limitations)
   * [Installation](##Installation)
-  * [How to run](##How to run)
+  * [How to run](##Run)
   * [Ressources](##Ressources)
     * [Talks/Tutorials](###Talks/Tutorials)
     * [Papers](###Papers)
     * [Textbooks](###Textbooks)
-    * [Other projects](###Similar projects)
+    * [Projects](###Projects)
     
 ## Experiments
 ### Pendulum-v0
+
+![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim.gif?)
+
 Two visualisations allow to see the progress of learning:
 
 - An history plot, which plot the relevant informations in function of the number of iteration, which can be seen on the following figure:
@@ -68,7 +71,7 @@ To have lower computation time, you can reduce the horizon, but it will decrease
 
 ## Installation
 
-## How to run
+## Run
 
 To use the script
 The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, and the usage of vizualisations.
@@ -103,7 +106,7 @@ https://deisenroth.cc/pdf/thesis.pdf
 
 http://www.gaussianprocess.org/gpml/
 
-## Similar projects
+### Projects
 
 https://github.com/nrontsis/PILCO
 
