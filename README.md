@@ -73,11 +73,19 @@ To have lower computation time, you can reduce the horizon, but it will decrease
 ### Dependencies
 numpy, gym, pytorch, gpytorch, matplotlib, threadpoolctl, scikit-learn, ffmpeg
 ### Install with Anaconda (recommended)
-You can create and install the environment with:
+Download [anaconda](https://www.anaconda.com/products/individual)
+
+Open an anaconda prompt window
+
+You can then create and install the environment with:
+'''
 $ conda env create -f environment.yml
+'''
 
 And activate it with:
+'''
 $ conda activate gp_rl_env
+'''
 
 Depending on your platform, you may have to modify the yml file to install pytorch following the instructions [here](https://pytorch.org/get-started/locally/)
 ## Run
