@@ -16,6 +16,9 @@ reducing the impact of modelerrors. We then use MPC to find a control sequence t
 We provide theoretical guarantees for the first-order optimality in the GP-based transition models with deterministic approximate inference forlong-term planning. 
 The proposed framework demonstrates superior data efficiency and learning rates compared to the current state of the art.
 
+The approach allows to learn sufficiently fast to allow online learning from scratch, which open many opportunities for RL in new applications. 
+The following results are reported for the double inverted pendulum. 
+
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 ## Table of contents
@@ -40,8 +43,11 @@ Two visualisations allow to see the progress of learning:
 
 - An history plot, which plot the relevant informations in function of the number of iteration, which can be seen on the following figure:
 
+We can see that the model allows the control of the environment in about 100 interactions with the environment from scratch.
+As a comparison, the state of the art of model free reinforcement learning algorithms, soft actor critic, defined in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment.
+
 ![histories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_example.png?raw=true)
-The cost of the trajectory is the mean predicted cost on the horizon, obtained by the model following the actions of the mpc
+The cost of the trajectory is the mean predicted cost on the horizon following the predicted actions of the mpc
 
 - A 3d visualisation of the model predictions and the points in memory. 
 
@@ -54,18 +60,21 @@ Note that the uncertainty represented in the 3d plot do not represent the uncert
 
 ## Methodology
 
-Compared to the implementation described in the papers above, the scripts have been designed to perform the control in one trial over a long time, which means:
-- The environment are not reset
-- Training of the hyper-parameters and vizualisations are recurrently performed in a parallel process
-- An option has been added to decide to include a point in the memory of the gps depending on the prediction error at that point and the predicted uncertainty
-- The function optimized is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
+Compared to the implementation in the paper, the scripts have been designed to perform the control in one trial over a long time, which means:
+- The environment is not reset
+- Training of the hyper-parameters and storage of vizualisations are performed in a parallel process at regular time interval
+- An option has been added to decide to include a point in the memory of the model depending on the prediction error at that point and the predicted uncertainty
+- The function optimized in the mpc is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
 
 These models are obtained without using any paramterics models. The only prior used is in the initializations values of the hyper-parameters of the gaussian process.
 Yet, the control is stabilized most of the time before 100 iterations, with 30 iterations being random actions.
 
 ## Limitations
 
-The implementation is not complete yet. The analytical derivates of the fmm and lmm functions have yet to be computed to speed up the actions optimizations, 
+- The cost function must be clearly defined as a distance function of the states/observations
+- The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can happen if the sampling time between points is too low. An example of that is the mountain car problem.
+- The dimension of the input and output of the model must stay low (below 20)
+- The implementation is not complete yet. The analytical derivates of the fmm and lmm functions have yet to be computed to speed up the actions optimizations, 
 which explains why the computation times are so important. The optimization of the hamiltonian has been replaced by the optimization of the predicted long term cost.
 To have lower computation time, you can reduce the horizon, but it will decrease the performances.
 
@@ -98,7 +107,7 @@ The syntax is parameters_"gym_env_name".json
 - Actions optimizer
 - Memory
 
-To use the model on a different gym environement, an other json file must be created, which contains the same structure.
+To use the model on a different gym environement, an other json file must be created, which contains the same structure and parameters, but with different values.
 
 ## Ressources
 
@@ -123,5 +132,3 @@ http://www.gaussianprocess.org/gpml/
 ### Projects
 
 https://github.com/nrontsis/PILCO
-
-Dynamic vizualizations of the 3d update model and history plots are coming soon
