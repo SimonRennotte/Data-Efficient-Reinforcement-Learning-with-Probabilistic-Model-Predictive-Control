@@ -58,6 +58,17 @@ The graphs represented on the lower row represent the predicted uncertainty, and
 The points stored in the memory of the gaussian process model are represented in green, and the points not stored in black.
 Note that the uncertainty represented in the 3d plot do not represent the uncertainty on the points, since the last dimension is not visible and has been set using linear regression fo the visible states input
 
+### Mountain car
+
+The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, a parameter has been added to allow to repeat actions during planning, such that the horizon can be longer. For the shown example, 1 time step correspond to 5 time steps where the action is maintained. If this is not used, the control is not possible. In this particular example, 75 x 5 random random steps have been used as initialization.
+
+[!animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_mountain_car.gif?)
+
+[!histories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_mountain_car.gif?)
+
+[!3d_models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_mountain_car.gif?)
+
+As for the pendulum, the optimal control is obtained in very few steps compared to the state of the art of model-free reinforcement agents
 ## Methodology
 
 Compared to the implementation in the paper, the scripts have been designed to perform the control in one trial over a long time, which means:
