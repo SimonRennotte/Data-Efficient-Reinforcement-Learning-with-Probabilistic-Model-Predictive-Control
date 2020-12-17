@@ -150,8 +150,8 @@ def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targ
 				z_grid_mean = z_grid_1d_mean.reshape(x_grid.shape)
 				z_grid_std = z_grid_1d_std.reshape(x_grid.shape)
 				surf1 = axes[subplot_idx].contour3D(x_grid, y_grid, z_grid_mean, n_ticks, cmap='cool')
-				axes[subplot_idx].set_xlabel('State ' + str(best_features[0]), fontsize=fontsize, rotation=150)
-				axes[subplot_idx].set_ylabel('State ' + str(best_features[1]), fontsize=fontsize, rotation=150)
+				axes[subplot_idx].set_xlabel('Input ' + str(best_features[0]), fontsize=fontsize, rotation=150)
+				axes[subplot_idx].set_ylabel('Input ' + str(best_features[1]), fontsize=fontsize, rotation=150)
 				axes[subplot_idx].set_zlabel('Variation state ' + str(index_observation_represent), fontsize=fontsize,
 					rotation=60)
 				if output_data is not None:
@@ -172,8 +172,8 @@ def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targ
 						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
 
 				surf2 = axes[subplot_idx + total_col_max].contour3D(x_grid, y_grid, z_grid_std, n_ticks, cmap='cool')
-				axes[subplot_idx + total_col_max].set_xlabel('State ' + str(best_features[0]), fontsize=fontsize, rotation=150)
-				axes[subplot_idx + total_col_max].set_ylabel('State ' + str(best_features[1]), fontsize=fontsize, rotation=150)
+				axes[subplot_idx + total_col_max].set_xlabel('Input ' + str(best_features[0]), fontsize=fontsize, rotation=150)
+				axes[subplot_idx + total_col_max].set_ylabel('Input ' + str(best_features[1]), fontsize=fontsize, rotation=150)
 				axes[subplot_idx + total_col_max].set_zlabel('Errors and std state ' + str(index_observation_represent),
 					fontsize=fontsize, rotation=60)
 

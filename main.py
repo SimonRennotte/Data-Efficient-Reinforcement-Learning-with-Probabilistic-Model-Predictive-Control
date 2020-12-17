@@ -28,6 +28,8 @@ def main():
 	params_memory = params_json_env['params_memory']
 	env = gym.make(env_to_control)
 	if params_general['save_render_env']:
+		if not os.path.exists(os.path.join('folder_save', env_to_control)):
+			os.makedirs(os.path.join('folder_save', env_to_control))
 		rec = VideoRecorder(env, path=os.path.join('folder_save', env_to_control, 'anim.mp4'))
 	env.reset()
 	target = np.array(params_controller['target'])
@@ -37,8 +39,9 @@ def main():
 	control_object = ProbabiliticGpMpcController(env.observation_space, env.action_space, params_controller,
 									params_train, params_actions_optimizer, hyperparameters_init, target,
 									weights_target, weights_target_terminal_cost, params_constraints, env_to_control)
-	observation, reward, done, info = \
-		env.step(env.action_space.low + (env.action_space.high - env.action_space.low) * np.random.uniform(0, 1))
+	action = env.action_space.low + (env.action_space.high - env.action_space.low) * np.random.uniform(0, 1)
+	for idx_action in range(params_controller["num_repeat_actions"]):
+		observation, reward, done, info = env.step(action)
 
 	for idx_random_action in range(params_init['num_random_actions_init']):
 		control_object.action = np.random.uniform(0, 1)
@@ -59,7 +62,8 @@ def main():
 		time_start = time.time()
 
 		action, add_info_dict = control_object.compute_prediction_action(observation, s_observation)
-		new_observation, reward, done, info = env.step(action)
+		for idx_action in range(params_controller["num_repeat_actions"]):
+			new_observation, reward, done, info = env.step(action)
 		control_object.add_point_memory(observation, action, new_observation, reward,
 										add_info_dict=add_info_dict, params_memory=params_memory)
 		if params_general['verbose']:
