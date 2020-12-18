@@ -18,12 +18,12 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 
 ---
 
-Summary for non experts: the approach uses a model a model to predict and control the environment. This is called Model Predictive Control (MPC) and is commonly used in process control theory. At each interaction with the real environment, the optimal control is obtained with an iterative approach using the model to predict the evolution of states given control signals over a time horizon, which is chosen and fixed. The simulation is used multiple times to find the optimal controls in the time horizon with a gradient descent optimizer. The first control of the time horizon is then used for the current step of the simulation. At each step, the approach is used again.
+Summary for non experts: the approach uses a model to control the environment. This is called Model Predictive Control (MPC) and is commonly used in process control theory. At each interaction with the real environment, the optimal action is obtained with an iterative approach using the model to predict the evolution of states given control signals over a fixed time horizon. This simulation is used multiple times to find the optimal actions in the time horizon window with a gradient descent optimizer. The first control of the time horizon is then used for the current step of the simulation. At each step, the simulation is used multiple times again.
 In traditional control theory, the model is a mathematical model obtained from fondamental theory. Here the model is a gaussian process. 
 
-Gaussian process allow to predict the variation of states given the states and input signals, and the confidence interval of these predictions given its parameters and points stored in memory. The specificity of the article resides in that the uncertainties are propagated during the trajectory computations, which allow us to compute the loss, but also the uncertainty of the loss. This can be used to explore more efficiently by visiting the states where the uncertainty is high, and to get a sense in real time of how sure the model is. Uncertainty can also be used for to use security constraint. This is done by forbidding to visit states where the uncertainty is too high (constraints on the lower bound or upper bound of the confidence interval of the states). This is already used for safe bayesian optimization, for example, [to optimize drone controllers to avoid crashes during the optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
+Gaussian processes allow to predict the variation of states given the states and input signals, and the confidence interval of these predictions given its parameters and points stored in memory. The specificity of the paper resides in that the uncertainties are propagated during the trajectory computations, which allow us to compute the loss, but also the uncertainty of the loss in the simulation horizon. This can be used to explore more efficiently by visiting the states where the loss uncertainty is high. It can also be used to get a sense in real time of how sure the model is about the future. Uncertainty can also be used to impose security constraints. This can be done by forbidding to visit states where the uncertainty is too high, by imposing constraints on the lower bound or upper bound of the confidence interval of the states. This is already used for safe bayesian optimization. For example, it has been used [to optimize drone controllers to avoid crashes during the optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
 
-For each states, one gaussian process is used that has n (number of states) + m (number of control signal outputs), and n number of outputs. Conceptually, gaussian processes can be seen as if they look at adjacent points in memory to compute the predictons at new unseen points. Depending on how far the new point is from points that are stored in memory, the uncertainty will be higher or lower. The gaussian processes models obtained for each environment are represented below.
+For each states, one gaussian process is used that has n (number of states) + m (number of control signal outputs), and n number of outputs. Conceptually, gaussian processes can be seen as if they look at adjacent points in memory to compute the predictons at new unseen points. Depending on how far the new point is from points that are stored in memory, the uncertainty will be higher or lower.
 
 The approach allows to learn sufficiently fast to allow online learning from scratch, which open many opportunities for RL in new applications. 
 The following results are reported for the double inverted pendulum. 
@@ -45,17 +45,15 @@ The following results are reported for the double inverted pendulum.
     * [Projects](###Projects)
     
 
-## Methodology
+## Differences from the paper implementation
 
 Compared to the implementation in the paper, the scripts have been designed to perform the control in one trial over a long time, which means:
 - The function optimized in the mpc is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
 - The environment is not reset, the learning happens in one run.
 - Training of the hyper-parameters and storage of vizualisations are performed in a parallel process at regular time interval
 - An option has been added to decide to include a point in the memory of the model depending on the prediction error at that point and the predicted uncertainty to avoid having too much points in memory
-- An option has been added to repeat predicted actions, so that longer time horizon can be used with the MPC, which is cruciar for some environment like the mountain car.
 
-These models are obtained without using any paramterics models. The only prior used is in the initializations values of the hyper-parameters of the gaussian process.
-Yet, the control is stabilized most of the time before 100 iterations, with 30 iterations being random actions.
+An option has been added to repeat the predicted actions, so that longer time horizon can be used with the MPC, which is cruciar for some environment like the mountain car.
 
 ## Experiments
 ### Pendulum-v0
@@ -145,11 +143,11 @@ Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
 ### Papers
 
-https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
+PILCO paper: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
 
-https://deepai.org/publication/data-efficient-reinforcement-learning-with-probabilistic-model-predictive-control
+Original paper: https://deepai.org/publication/data-efficient-reinforcement-learning-with-probabilistic-model-predictive-control
 
-https://deisenroth.cc/pdf/thesis.pdf
+Thesis: https://deisenroth.cc/pdf/thesis.pdf
 
 ### Textbooks
 
