@@ -1,5 +1,6 @@
 import time
 import os
+import datetime
 
 import numpy as np
 import gym
@@ -26,11 +27,21 @@ def main():
 	params_actions_optimizer = params_json_env['params_actions_optimizer']
 	params_init = params_json_env['params_init']
 	params_memory = params_json_env['params_memory']
+	num_steps = params_json_env['num_steps_env']
+	num_repeat_actions = params_controller["num_repeat_actions"]
 	env = gym.make(env_to_control)
+
+	datetime_now = datetime.datetime.now()
+	folder_save = os.path.join('folder_save', env_to_control, 'y' + str(datetime_now.year) \
+					+ '_mon' + str(datetime_now.month) + '_d' + str(datetime_now.day) + '_h' + str(datetime_now.hour) \
+					+ '_min' + str(datetime_now.minute) + '_s' + str(datetime_now.second))
+	if not os.path.exists(folder_save):
+		os.makedirs(folder_save)
+
 	if params_general['save_render_env']:
 		if not os.path.exists(os.path.join('folder_save', env_to_control)):
 			os.makedirs(os.path.join('folder_save', env_to_control))
-		rec = VideoRecorder(env, path=os.path.join('folder_save', env_to_control, 'anim.mp4'))
+		rec = VideoRecorder(env, path=os.path.join(folder_save, 'anim' + env_to_control + '.mp4'))
 	env.reset()
 	target = np.array(params_controller['target'])
 	weights_target = np.diag(params_controller['weights_target'])
@@ -38,32 +49,40 @@ def main():
 	s_observation = np.diag(params_controller['s_observation'])
 	control_object = ProbabiliticGpMpcController(env.observation_space, env.action_space, params_controller,
 									params_train, params_actions_optimizer, hyperparameters_init, target,
-									weights_target, weights_target_terminal_cost, params_constraints, env_to_control)
+									weights_target, weights_target_terminal_cost, params_constraints, env_to_control,
+									folder_save, num_repeat_actions)
 	action = env.action_space.low + (env.action_space.high - env.action_space.low) * np.random.uniform(0, 1)
-	for idx_action in range(params_controller["num_repeat_actions"]):
-		observation, reward, done, info = env.step(action)
+	observation, reward, done, info = env.step(action)
 
-	for idx_random_action in range(params_init['num_random_actions_init']):
+	for idx_random_action in range(params_init['num_random_actions_init'] // num_repeat_actions):
 		control_object.action = np.random.uniform(0, 1)
 		action = env.action_space.low + (env.action_space.high - env.action_space.low) * control_object.action
-		new_observation, reward, done, info = env.step(action)
+		for idx_action in range(num_repeat_actions):
+			new_observation, reward, done, info = env.step(action)
+			if params_general['render_env']:
+				try:
+					env.render()
+				except:
+					pass
+			if params_general['save_render_env']:
+				rec.capture_frame()
 
-		if params_general['render_env']:
-			try:
-				env.render()
-			except:
-				pass
-		if params_general['save_render_env']:
-			rec.capture_frame()
 		control_object.add_point_memory(observation, action, new_observation, reward)
 		observation = new_observation
 
-	for index_iter in range(params_general['num_steps_env'] - params_init['num_random_actions_init']):
+	for index_iter in range((num_steps - params_init['num_random_actions_init']) // num_repeat_actions):
 		time_start = time.time()
 
 		action, add_info_dict = control_object.compute_prediction_action(observation, s_observation)
-		for idx_action in range(params_controller["num_repeat_actions"]):
+		for idx_action in range(num_repeat_actions):
 			new_observation, reward, done, info = env.step(action)
+			if params_general['render_env']:
+				try:
+					env.render()
+				except:
+					pass
+			if params_general['save_render_env']:
+				rec.capture_frame()
 		control_object.add_point_memory(observation, action, new_observation, reward,
 										add_info_dict=add_info_dict, params_memory=params_memory)
 		if params_general['verbose']:
@@ -71,13 +90,6 @@ def main():
 				print(key + ': ' + str(add_info_dict[key]))
 		observation = new_observation
 
-		if params_general['render_env']:
-			try:
-				env.render()
-			except:
-				pass
-		if params_general['save_render_env']:
-			rec.capture_frame()
 
 		if params_general['save_plot_history'] and \
 				(control_object.num_points_memory % params_general["frequency_iter_save"] == 0):

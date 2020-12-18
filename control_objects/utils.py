@@ -13,15 +13,15 @@ from threadpoolctl import threadpool_limits
 from .gp_models import ExactGPModelMonoTask
 
 
-def save_plot_history_process(states, actions, states_next, prediction_info_over_time, output_dir, env_to_control=''):
+def save_plot_history_process(states, actions, states_next, prediction_info_over_time, folder_save, num_repeat_actions=1):
 	with threadpool_limits(limits=1, user_api='blas'), threadpool_limits(limits=1, user_api='openmp'):
-		indexes = np.arange(len(states))
+		indexes = np.arange(0, len(states) * num_repeat_actions, num_repeat_actions)
 		fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 6))
 		axes[0][0].set_title('Normed states')
 		axes[0][1].set_title('Normed actions')
 		axes[1][0].set_title('Normed errors and predicted uncertainty')
 		axes[1][1].set_title('Cost and horizon cost')
-		indexes_control = prediction_info_over_time['iteration']
+		indexes_control = np.array(prediction_info_over_time['iteration']) // num_repeat_actions
 		predictions_over_time_show = np.zeros_like(states_next)
 		predictions_over_time_show[indexes_control] = \
 			[prediction[0].numpy() for prediction in prediction_info_over_time['predicted states']]
@@ -39,14 +39,14 @@ def save_plot_history_process(states, actions, states_next, prediction_info_over
 			axes[1][0].fill_between(indexes, 0, 2 * predictions_std_over_time_show[:, state_idx],
 				label='p_2std' + str(state_idx),
 				color=plt.get_cmap('tab20').colors[2 * state_idx + 1], alpha=0.6)
-		axes[1][1].plot(indexes_control,
+		axes[1][1].plot(list(indexes_control * num_repeat_actions),
 			np.array([element for element in prediction_info_over_time['cost']]), label='cost', color='k')
-		axes[1][1].plot(indexes_control, mean_cost_traj, label='cost trajectory', color='orange')
-		axes[1][1].fill_between(indexes_control, mean_cost_traj - 2 * mean_cost_traj_std,
+		axes[1][1].plot(list(indexes_control * num_repeat_actions), mean_cost_traj, label='cost trajectory', color='orange')
+		axes[1][1].fill_between(list(indexes_control * num_repeat_actions), mean_cost_traj - 2 * mean_cost_traj_std,
 			mean_cost_traj + 3 * mean_cost_traj_std, label='cost trajectory 3 std', alpha=0.6)
 
 		for action_idx in range(len(actions[0])):
-			axes[0][1].plot(indexes, np.array(actions)[:, action_idx], label='a_' + str(action_idx))
+			axes[0][1].step(indexes, np.array(actions)[:, action_idx], label='a_' + str(action_idx))
 
 		plt.xlabel("time")
 		axes[0][0].legend()
@@ -55,25 +55,18 @@ def save_plot_history_process(states, actions, states_next, prediction_info_over
 		axes[1][0].set_ylim(0, 0.05)
 		axes[1][1].legend()
 		axes[1][1].set_ylim(0, 1)
-		axes[1][1].set_xlim(0, len(indexes))
+		axes[1][1].set_xlim(0, np.max(indexes))
 		plt.tight_layout()
-		year = datetime.datetime.now().year
-		month = datetime.datetime.now().month
-		day = datetime.datetime.now().day
 		hour = datetime.datetime.now().hour
 		minute = datetime.datetime.now().minute
 		second = datetime.datetime.now().second
-		folder_save = os.path.join(output_dir, env_to_control, str(year) + '_m' + str(month) + '_d' + str(day))
-		if not os.path.exists(folder_save):
-			os.makedirs(folder_save)
 		fig.savefig(os.path.join(folder_save, 'history' + '_h' + str(hour) + '_m' + str(minute)
 											  + '_s' + str(second) + '.png'))
 		plt.close()
 
 
-def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targets, parameters, constraints,
-		indexes_points_in_gp_memory=None,
-		prop_extend_domain=1, n_ticks=100, total_col_max=3, fontsize=6, output_dir='models_3d', env_to_control=''):
+def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targets, parameters, constraints, folder_save,
+		indexes_points_in_gp_memory=None, prop_extend_domain=1, n_ticks=100, total_col_max=3, fontsize=6):
 	with threadpool_limits(limits=1, user_api='blas'), \
 			threadpool_limits(limits=1, user_api='openmp'), torch.no_grad(), gpytorch.settings.fast_pred_var():
 		torch.set_num_threads(1)
@@ -174,7 +167,7 @@ def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targ
 				surf2 = axes[subplot_idx + total_col_max].contour3D(x_grid, y_grid, z_grid_std, n_ticks, cmap='cool')
 				axes[subplot_idx + total_col_max].set_xlabel('Input ' + str(best_features[0]), fontsize=fontsize, rotation=150)
 				axes[subplot_idx + total_col_max].set_ylabel('Input ' + str(best_features[1]), fontsize=fontsize, rotation=150)
-				axes[subplot_idx + total_col_max].set_zlabel('Errors and std state ' + str(index_observation_represent),
+				axes[subplot_idx + total_col_max].set_zlabel('Uncertainty: std state ' + str(index_observation_represent),
 					fontsize=fontsize, rotation=60)
 
 				if output_data is not None:
@@ -199,15 +192,9 @@ def save_plot_model_3d_process(input_data, output_data, train_inputs, train_targ
 						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
 
 			plt.tight_layout()
-			year = datetime.datetime.now().year
-			month = datetime.datetime.now().month
-			day = datetime.datetime.now().day
 			hour = datetime.datetime.now().hour
 			minute = datetime.datetime.now().minute
 			second = datetime.datetime.now().second
-			folder_save = os.path.join(output_dir, env_to_control, str(year) + '_m' + str(month) + '_d' + str(day))
-			if not os.path.exists(folder_save):
-				os.makedirs(folder_save)
 			fig.savefig(os.path.join(folder_save, 'model_3d' + '_h' + str(hour) + '_m' + str(minute)
 															  + '_s' + str(second) + '.png'))
 			plt.close()

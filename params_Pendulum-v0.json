@@ -14,5 +14,6 @@
 	"params_actions_optimizer": {"disp": null, "maxcor": 15, "ftol": 1e-6, "gtol": 1e-8, "eps": 1e-2, "maxfun": 40,
 									"maxiter": 15, "iprint": -1, "maxls": 15, "finite_diff_rel_step": null},
 	"params_memory": {"min error prediction prop for storage":  [1e-3, 1e-3, 1e-3],
-						"min prediction std prop for storage":  [1.5e-3, 1.5e-3, 1.5e-3]}
+						"min prediction std prop for storage":  [1.5e-3, 1.5e-3, 1.5e-3]},
+	"num_steps_env": 150
 }

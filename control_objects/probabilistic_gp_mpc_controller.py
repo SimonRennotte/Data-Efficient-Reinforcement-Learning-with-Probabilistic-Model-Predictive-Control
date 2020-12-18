@@ -17,7 +17,7 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 class ProbabiliticGpMpcController(BaseControllerObject):
 	def __init__(self, observation_space, action_space, params_controller, params_train, params_actions_optimizer,
 			hyperparameters_init, target_state, weights_matrix_cost_function, weight_matrix_cost_function_terminal, 
-			constraints, env_to_control):
+			constraints, env_to_control, folder_save, num_repeat_actions):
 		BaseControllerObject.__init__(self, observation_space, action_space)
 		self.models = []
 		self.weight_matrix_cost_function = torch.Tensor(weights_matrix_cost_function)
@@ -39,8 +39,9 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		self.prediction_info_over_time = {}
 		self.limit_derivative_actions = params_controller['limit derivative actions']
 		self.max_derivative_action_norm = params_controller['max derivative actions norm']
-		self.folder_save = 'folder_save'
+		self.folder_save = folder_save
 		self.env_to_control = env_to_control
+		self.num_repeat_actions = num_repeat_actions
 		self.indexes_memory_gp = []
 		if self.limit_derivative_actions:
 			min_d_actions = -self.max_derivative_action_norm
@@ -328,7 +329,7 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			# (self.observation_space.high - self.observation_space.low) + self.observation_space.low
 			# denorm_std_states = std_states * (self.observation_space.high - self.observation_space.low)
 			std_states = torch.sqrt(torch.diagonal(self.s_states_pred, dim1=-2, dim2=-1))
-			add_info_dict = {'iteration': self.num_points_memory,
+			add_info_dict = {'iteration': self.num_points_memory * self.num_repeat_actions,
 							'state': self.mu_states_pred[0],
 							'predicted states': self.mu_states_pred[1:],
 							'predicted states std': std_states[1:],
@@ -357,8 +358,8 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 						self.models[0].train_inputs[0],
 						[model.train_targets for model in self.models],
 						[model.state_dict() for model in self.models],
-						self.constraints, self.indexes_memory_gp, prop_extend_domain, n_ticks, total_col_max,
-						fontsize, self.folder_save, self.env_to_control))
+						self.constraints, self.folder_save, self.indexes_memory_gp, prop_extend_domain, n_ticks,
+						total_col_max, fontsize))
 			self.p_save_plot_model_3d.start()
 			self.num_cores_main -= 1
 
@@ -368,8 +369,7 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			actions = self.x[:self.num_points_memory, self.num_outputs:].numpy()
 			states_next = self.y[:self.num_points_memory].numpy() + states
 			self.p_save_plot_history = self.ctx.Process(target=save_plot_history_process,
-			args=(states, actions, states_next, self.prediction_info_over_time, self.folder_save,
-			self.env_to_control))
+			args=(states, actions, states_next, self.prediction_info_over_time, self.folder_save, self.num_repeat_actions))
 			self.p_save_plot_history.start()
 			self.num_cores_main -= 1
 
