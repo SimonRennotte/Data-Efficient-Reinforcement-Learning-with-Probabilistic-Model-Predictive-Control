@@ -1,5 +1,5 @@
 # Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
-![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim.gif?)
+![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/gif_total.gif?)
 
 Example of control algorithm learning from scratch in less than 100 interactions with the environment
 ## Overview
