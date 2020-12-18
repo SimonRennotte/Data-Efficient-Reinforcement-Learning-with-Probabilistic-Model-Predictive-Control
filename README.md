@@ -21,7 +21,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 Summary for non experts: the approach uses a model a model to predict and control the environment. This is called Model Predictive Control (MPC) and is commonly used in process control theory. At each interaction with the real environment, the optimal control is obtained with an iterative approach using the model to predict the evolution of states given control signals over a time horizon, which is chosen and fixed. The simulation is used multiple times to find the optimal controls in the time horizon with a gradient descent optimizer. The first control of the time horizon is then used for the current step of the simulation. At each step, the approach is used again.
 In traditional control theory, the model is a mathematical model obtained from fondamental theory. Here the model is a gaussian process. 
 
-Gaussian process allow to predict the variation of states given the states and input signals, and the confidence interval of these predictions given its parameters and points stored in memory. The specificity of the article resides in that the uncertainties are propagated during the trajectory computations, which allow us to compute the loss, but also the uncertainty of the loss. This can be used to explore more efficiently by visiting the states where the uncertainty is high. 
+Gaussian process allow to predict the variation of states given the states and input signals, and the confidence interval of these predictions given its parameters and points stored in memory. The specificity of the article resides in that the uncertainties are propagated during the trajectory computations, which allow us to compute the loss, but also the uncertainty of the loss. This can be used to explore more efficiently by visiting the states where the uncertainty is high, and to get a sense in real time of how sure the model is. Uncertainty can also be used for to use security constraint. This is done by forbidding to visit states where the uncertainty is too high (constraints on the lower bound or upper bound of the confidence interval of the states). This is already used for safe bayesian optimization to optimize, for example, ![drone controllers to avoid crashes during the optimization.]{https://www.youtube.com/watch?v=GiqNQdzc5TI}
 
 For each states, one gaussian process is used that has n (number of states) + m (number of control signal outputs), and n number of outputs. Simply put, gaussian processes look at how far we are from points that are stored in memory to make new predictions. Depending on how far we are, the uncertainty will be higher or lower. The gaussian process models obtained for each environmenent are represented below.
 
@@ -133,9 +133,11 @@ To use the model on a different gym environement, an other json file must be cre
 
 ### Talks/Tutorials
 
-https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
+Gaussian processes: https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
 
-https://www.youtube.com/watch?v=AVdx2hbcsfI
+Presentation of PILCO (method similar to the one used here), by one of the coauthors: https://www.youtube.com/watch?v=AVdx2hbcsfI
+
+Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
 ### Papers
 
