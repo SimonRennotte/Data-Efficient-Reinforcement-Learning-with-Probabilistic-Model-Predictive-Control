@@ -34,7 +34,7 @@ The following results are reported for the double inverted pendulum.
   * [Methodology](##Methodology)
   * [Experiments](##Experiments)
     * [Pendulum-v0](###Pendulum-v0)
-    * [MountainCarCountinuous-v0](###MountainCarCountinuous-v0)
+    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
   * [Limitations](##Limitations)
   * [Installation](##Installation)
   * [How to run](##Run)
@@ -81,7 +81,7 @@ The graphs represented on the lower row represent the predicted uncertainty, and
 The points stored in the memory of the gaussian process model are represented in green, and the points not stored in black.
 Note that the uncertainty represented in the 3d plot do not represent the uncertainty on the points, since the last dimension is not visible and has been set using linear regression fo the visible states input
 
-### MountainCarCountinuous-v0
+### MountainCarContinuous-v0
 
 The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, a parameter has been added to allow to repeat actions during planning, such that the horizon can be longer. For the shown example, 1 time step correspond to 5 time steps where the action is maintained. If this is not used, the control is not possible. In this particular example, 75 x 5 random random steps have been used as initialization.
 
