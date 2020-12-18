@@ -16,6 +16,14 @@ reducing the impact of modelerrors. We then use MPC to find a control sequence t
 We provide theoretical guarantees for the first-order optimality in the GP-based transition models with deterministic approximate inference forlong-term planning. 
 The proposed framework demonstrates superior data efficiency and learning rates compared to the current state of the art.
 
+---
+
+In summary, the approach uses a model a model to predict and control the environment. This is called model predictive control and is widely used in process control theory. With the model, multiple simulations of the future are produced iteratively and for each, the cost function (or reward) of the trajectory is computed given the control signals. The controls of the next simulation are chosen so as to minimize the cost function with a gradient descent optimizer. In traditional control theory, the model is a mathematical model obtained from fondamental theory. Here the model is a gaussian process. 
+
+Gaussian process allow to predict the variation of states given the states and input signals, and the confidence interval of these predictions given its parameters and points stored in memory. The specificity of the article resides in that the uncertainties are propagated during the trajectory computations, which allow us to compute the loss, but also the uncertainty of the loss. This can be used to explore more efficiently by visiting the states where the uncertainty is high. 
+
+For each states, one gaussian process is used that has n (number of states) + m (number of control signal outputs), and n number of outputs. Simply put, gaussian processes look at how far we are from points that are stored in memory to make new predictions. Depending on how far we are, the uncertainty will be higher or lower. The gaussian process models obtained for each environmenent are represented below.
+
 The approach allows to learn sufficiently fast to allow online learning from scratch, which open many opportunities for RL in new applications. 
 The following results are reported for the double inverted pendulum. 
 
