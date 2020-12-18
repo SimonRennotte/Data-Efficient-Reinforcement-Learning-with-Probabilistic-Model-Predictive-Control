@@ -16,15 +16,25 @@ reducing the impact of modelerrors. We then use MPC to find a control sequence t
 We provide theoretical guarantees for the first-order optimality in the GP-based transition models with deterministic approximate inference forlong-term planning. 
 The proposed framework demonstrates superior data efficiency and learning rates compared to the current state of the art.
 
+---
+
+Summary for non experts: the approach uses a model a model to predict and control the environment. This is called Model Predictive Control (MPC) and is commonly used in process control theory. At each interaction with the real environment, the optimal control is obtained with an iterative approach using the model to predict the evolution of states given control signals over a time horizon, which is chosen and fixed. The simulation is used multiple times to find the optimal controls in the time horizon with a gradient descent optimizer. The first control of the time horizon is then used for the current step of the simulation. At each step, the approach is used again.
+In traditional control theory, the model is a mathematical model obtained from fondamental theory. Here the model is a gaussian process. 
+
+Gaussian process allow to predict the variation of states given the states and input signals, and the confidence interval of these predictions given its parameters and points stored in memory. The specificity of the article resides in that the uncertainties are propagated during the trajectory computations, which allow us to compute the loss, but also the uncertainty of the loss. This can be used to explore more efficiently by visiting the states where the uncertainty is high, and to get a sense in real time of how sure the model is. Uncertainty can also be used for to use security constraint. This is done by forbidding to visit states where the uncertainty is too high (constraints on the lower bound or upper bound of the confidence interval of the states). This is already used for safe bayesian optimization, for example, [to optimize drone controllers to avoid crashes during the optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
+
+For each states, one gaussian process is used that has n (number of states) + m (number of control signal outputs), and n number of outputs. Conceptually, gaussian processes can be seen as if they look at adjacent points in memory to compute the predictons at new unseen points. Depending on how far the new point is from points that are stored in memory, the uncertainty will be higher or lower. The gaussian processes models obtained for each environment are represented below.
+
 The approach allows to learn sufficiently fast to allow online learning from scratch, which open many opportunities for RL in new applications. 
 The following results are reported for the double inverted pendulum. 
 
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 ## Table of contents
+  * [Methodology](##Methodology)
   * [Experiments](##Experiments)
     * [Pendulum-v0](###Pendulum-v0)
-  * [Methodology](##Methodology)
+    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
   * [Limitations](##Limitations)
   * [Installation](##Installation)
   * [How to run](##Run)
@@ -34,6 +44,19 @@ The following results are reported for the double inverted pendulum.
     * [Textbooks](###Textbooks)
     * [Projects](###Projects)
     
+
+## Methodology
+
+Compared to the implementation in the paper, the scripts have been designed to perform the control in one trial over a long time, which means:
+- The function optimized in the mpc is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
+- The environment is not reset, the learning happens in one run.
+- Training of the hyper-parameters and storage of vizualisations are performed in a parallel process at regular time interval
+- An option has been added to decide to include a point in the memory of the model depending on the prediction error at that point and the predicted uncertainty to avoid having too much points in memory
+- An option has been added to repeat predicted actions, so that longer time horizon can be used with the MPC, which is cruciar for some environment like the mountain car.
+
+These models are obtained without using any paramterics models. The only prior used is in the initializations values of the hyper-parameters of the gaussian process.
+Yet, the control is stabilized most of the time before 100 iterations, with 30 iterations being random actions.
+
 ## Experiments
 ### Pendulum-v0
 
@@ -58,7 +81,7 @@ The graphs represented on the lower row represent the predicted uncertainty, and
 The points stored in the memory of the gaussian process model are represented in green, and the points not stored in black.
 Note that the uncertainty represented in the 3d plot do not represent the uncertainty on the points, since the last dimension is not visible and has been set using linear regression fo the visible states input
 
-### Mountain car
+### MountainCarContinuous-v0
 
 The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, a parameter has been added to allow to repeat actions during planning, such that the horizon can be longer. For the shown example, 1 time step correspond to 5 time steps where the action is maintained. If this is not used, the control is not possible. In this particular example, 75 x 5 random random steps have been used as initialization.
 
@@ -69,21 +92,11 @@ The mountain car problem is a little bit different in that the number of time st
 ![3d_models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_mountain_car.png?raw=True)
 
 As for the pendulum, the optimal control is obtained in very few steps compared to the state of the art of model-free reinforcement agents
-## Methodology
-
-Compared to the implementation in the paper, the scripts have been designed to perform the control in one trial over a long time, which means:
-- The environment is not reset
-- Training of the hyper-parameters and storage of vizualisations are performed in a parallel process at regular time interval
-- An option has been added to decide to include a point in the memory of the model depending on the prediction error at that point and the predicted uncertainty
-- The function optimized in the mpc is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
-
-These models are obtained without using any paramterics models. The only prior used is in the initializations values of the hyper-parameters of the gaussian process.
-Yet, the control is stabilized most of the time before 100 iterations, with 30 iterations being random actions.
 
 ## Limitations
 
 - The cost function must be clearly defined as a distance function of the states/observations
-- The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can happen if the sampling time between points is too low. An example of that is the mountain car problem.
+- The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time.
 - The dimension of the input and output of the model must stay low (below 20)
 - The implementation is not complete yet. The analytical derivates of the fmm and lmm functions have yet to be computed to speed up the actions optimizations, 
 which explains why the computation times are so important. The optimization of the hamiltonian has been replaced by the optimization of the predicted long term cost.
@@ -124,9 +137,11 @@ To use the model on a different gym environement, an other json file must be cre
 
 ### Talks/Tutorials
 
-https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
+Gaussian processes: https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
 
-https://www.youtube.com/watch?v=AVdx2hbcsfI
+Presentation of PILCO (method similar to the one used here), by one of the coauthors: https://www.youtube.com/watch?v=AVdx2hbcsfI
+
+Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
 ### Papers
 
