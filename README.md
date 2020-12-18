@@ -10,10 +10,10 @@ However, the majority of autonomous RL algorithms either rely on engineered feat
 Such a large number of interactions may be impractical in many real-world applications. 
 For example, robots are subject to wear and tear and, hence, millions of interactions may change or damage the system. 
 Moreover, practical systems have limitations in the form of the maximumtorque that can be safely applied.  
-To reduce the number of system interactionswhile naturally handling constraints, we propose a model-based RL frameworkbased on Model Predictive Control (MPC). 
-In particular, we propose to learn aprobabilistic transition model using Gaussian Processes (GPs) to incorporate modeluncertainties into long-term predictions, thereby, 
-reducing the impact of modelerrors. We then use MPC to find a control sequence that minimises the expectedlong-term cost.  
-We provide theoretical guarantees for the first-order optimality in the GP-based transition models with deterministic approximate inference forlong-term planning. 
+To reduce the number of system interactions while naturally handling constraints, we propose a model-based RL framework based on Model Predictive Control (MPC). 
+In particular, we propose to learn a probabilistic transition model using Gaussian Processes (GPs) to incorporate model uncertainties into long-term predictions, thereby, 
+reducing the impact of model errors. We then use MPC to find a control sequence that minimises the expected long-term cost.  
+We provide theoretical guarantees for the first-order optimality in the GP-based transition models with deterministic approximate inference for long-term planning. 
 The proposed framework demonstrates superior data efficiency and learning rates compared to the current state of the art.
 
 ---
@@ -31,7 +31,7 @@ The following results are reported for the double inverted pendulum.
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 ## Table of contents
-  * [Methodology](##Methodology)
+  * [Implementation differences from the paper](##Differences)
   * [Experiments](##Experiments)
     * [Pendulum-v0](###Pendulum-v0)
     * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
@@ -45,7 +45,7 @@ The following results are reported for the double inverted pendulum.
     * [Projects](###Projects)
     
 
-## Differences from the paper implementation
+## Implementation differences from the paper
 
 Compared to the implementation in the paper, the scripts have been designed to perform the control in one trial over a long time, which means:
 - The function optimized in the mpc is the lower confidence bound of the long term predicted cost to reward exploration and avoid being stuck in a local minima.
@@ -54,6 +54,7 @@ Compared to the implementation in the paper, the scripts have been designed to p
 - An option has been added to decide to include a point in the memory of the model depending on the prediction error at that point and the predicted uncertainty to avoid having too much points in memory
 
 An option has been added to repeat the predicted actions, so that longer time horizon can be used with the MPC, which is cruciar for some environment like the mountain car.
+Finally, the analytical derivatives of the cost function and gaussian processes are not used to find the optimal control. The current processing times are thus higher.
 
 ## Experiments
 ### Pendulum-v0
@@ -81,7 +82,7 @@ Note that the uncertainty represented in the 3d plot do not represent the uncert
 
 ### MountainCarContinuous-v0
 
-The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, a parameter has been added to allow to repeat actions during planning, such that the horizon can be longer. For the shown example, 1 time step correspond to 5 time steps where the action is maintained. If this is not used, the control is not possible. In this particular example, 75 x 5 random random steps have been used as initialization.
+The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, a parameter has been added to allow to repeat actions during planning, such that the horizon can be longer. For the shown example, 1 control time step correspond to 5 time steps where the action is maintained. If this is not used, the control is not possible.
 
 ![animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_mountain_car.gif?)
 
