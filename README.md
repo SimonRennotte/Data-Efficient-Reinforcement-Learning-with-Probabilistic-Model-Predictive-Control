@@ -103,6 +103,7 @@ Finally, the implementation is not complete yet. analytical derivatives of the c
 - The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can also be a problem when the dimensionality of the action space is too high.
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately). 
 - If too much points are stored in the memory of the gaussian process, the computation times might become very high. The computation times scale in n³.
+- The current implementation will not not with environement with discrete states
 
 ## Installation
 ### Dependencies
