@@ -10,7 +10,7 @@ Trial-and-error based reinforcement learning (RL) has seen rapid advancements in
 However, the majority of autonomous RL algorithms either rely on engineered features or a large number of interactions with the environment. 
 Such a large number of interactions may be impractical in many real-world applications. 
 For example, robots are subject to wear and tear and, hence, millions of interactions may change or damage the system. 
-Moreover, practical systems have limitations in the form of the maximumtorque that can be safely applied.  
+Moreover, practical systems have limitations in the form of the maximum torque that can be safely applied.  
 To reduce the number of system interactions while naturally handling constraints, we propose a model-based RL framework based on Model Predictive Control (MPC). 
 In particular, we propose to learn a probabilistic transition model using Gaussian Processes (GPs) to incorporate model uncertainties into long-term predictions, thereby, 
 reducing the impact of model errors. We then use MPC to find a control sequence that minimises the expected long-term cost.  
@@ -19,7 +19,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 
 ---
 
-### Summary for non experts 
+### Concept summary
 The approach uses a model to control the environment. This method is called Model Predictive Control (MPC) and is commonly used in process control theory. At each interaction with the real environment, the optimal action is obtained through an iterative approach. The model is used to evaluate certain actions over a fixed time horizon using a simulation by predicting the evolution of states with the model, and calculating the corresponding loss. This simulation is used several times at each interaction with the real world to find the optimal actions in the time horizon window with a gradient descent optimizer (for the current implementation). The first control of the time horizon is then used for the next action in the real world. 
 In traditional control theory, the model is a mathematical model obtained from theory. Here, the model is a Gaussian process. 
 
@@ -64,14 +64,14 @@ Note that the uncertainty represented in the 3d graph does not represent the exa
 
 The following figure shows the time graph for the inverted pendulum that is shown in the animation :
 
-! [stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_example.png?raw=true)
+![stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_example.png?raw=true)
 
 We can see that the model allows to control the environment in about a hundred interactions with the environment from scratch.
 As a comparison, the state of the art of model free reinforcement learning algorithms that I found in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment. 
 
 The gaussian process models along the points in memory are represented in the following figure.
 
-! [3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_example.png?raw=true)
+![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_example.png?raw=true)
 
 ### MountainCarContinuous-v0
 
