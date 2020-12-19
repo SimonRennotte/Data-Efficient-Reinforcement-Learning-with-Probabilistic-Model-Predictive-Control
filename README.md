@@ -32,7 +32,7 @@ The following results are reported in the original paper for the double inverted
 
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
-Finally, an interesting feature of using this model based reinforcement learning method that was not investigated in the original papers, or other papers to the best of my knowledge, is the possibility to learn the model from trajectories that were obtained by other controllers, such as humans. It is thus possible to show some examples of good actions in an environment before using this method to show the agent how the environment works and speed the learning even more.
+Finally, an interesting feature of using this model based reinforcement learning method that was not investigated in the original paper, is the possibility to learn the model from trajectories that were obtained by other controllers, such as humans. It is thus possible to show some examples of good actions in an environment before using this method to show the agent how the environment works and speed the learning even more.
 
 ## Table of contents
   * [Experiments](##Experiments)
