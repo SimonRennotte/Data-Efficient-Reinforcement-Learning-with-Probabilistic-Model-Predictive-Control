@@ -53,7 +53,7 @@ For each experiment, two plots allow to see the learning progress:
 - A time graph, which plots the evolution of states in the top left corner, and actions in the top right corner. Prediction errors and predicted uncertainty are plotted on the bottom left. The loss and cost of the trajectory as well as its uncertainty are plotted on the bottom right. 
 The cost of the path is the average cost expected over the horizon as a result of the planned actions of the MPC. Note that the uncertainty of the loss over the horizon can be used to identify states where the future is uncertain for the model.
 
-- A 3d vizualization that allows to visualize the Gaussian process model and points in memory. In this plot, each of the graphs on the top line represents the variation in status as a function of the state of the inputs and actions. By definition, the action indices are higher than the state indices.
+- 3d visualizations that shows the Gaussian processes model and points in memory. In this plot, each of the graphs on the top line represents the variation in status as a function of the state of the inputs and actions. By definition, the action indices are higher than the state indices.
 The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the gaussian process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs on the bottom line represent the predicted uncertainty, and the points are the prediction errors.
 The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
 Note that the uncertainty represented in the 3d graph does not represent the exact uncertainty on the points, since the last dimension is not visible and has been defined using linear regression with the visible states as input.
@@ -162,7 +162,7 @@ http://www.gaussianprocess.org/gpml/
 https://github.com/nrontsis/PILCO
 
 ## Cite this work
-If my implementation has been useful to you, please cite my work in your research. Thank you.
+If my implementation has been useful to you, please cite thsi github in your research. Thank you.
 
 ## Contact me
 You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
