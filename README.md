@@ -19,6 +19,21 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 
 ---
 
+## Table of contents
+  * [Concept summary](##Summary)
+  * [Experiments](##Experiments)
+    * [Pendulum-v0](###Pendulum-v0)
+    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
+  * [Implementation differences from the paper](##Differences)
+  * [Limitations](##Limitations)
+  * [Installation](##Installation)
+  * [How to run](##Run)
+  * [Ressources](##Ressources)
+    * [Talks/Tutorials](###Talks/Tutorials)
+    * [Papers](###Papers)
+    * [Textbooks](###Textbooks)
+    * [Projects](###Projects)
+    
 ### Concept summary
 The approach uses a model to control the environment. This method is called Model Predictive Control (MPC) and is commonly used in process control theory. At each interaction with the real environment, the optimal action is obtained through an iterative approach. The model is used to evaluate certain actions over a fixed time horizon using a simulation by predicting the evolution of states with the model, and calculating the corresponding loss. This simulation is used several times at each interaction with the real world to find the optimal actions in the time horizon window with a gradient descent optimizer (for the current implementation). The first control of the time horizon is then used for the next action in the real world. In traditional control theory, the model is a mathematical model obtained from theory. Here, the model is a Gaussian process. 
 
@@ -33,20 +48,6 @@ The following results are reported in the original paper for the double inverted
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 Finally, an interesting feature of using this model based reinforcement learning method that was not investigated in the original paper, is the possibility to learn the model from trajectories that were obtained by other controllers, such as humans. It is thus possible to show some examples of good actions in an environment before using this method to show the agent how the environment works and speed the learning even more.
-
-## Table of contents
-  * [Experiments](##Experiments)
-    * [Pendulum-v0](###Pendulum-v0)
-    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
-  * [Implementation differences from the paper](##Differences)
-  * [Limitations](##Limitations)
-  * [Installation](##Installation)
-  * [How to run](##Run)
-  * [Ressources](##Ressources)
-    * [Talks/Tutorials](###Talks/Tutorials)
-    * [Papers](###Papers)
-    * [Textbooks](###Textbooks)
-    * [Projects](###Projects)
     
 ## Experiments
 For each experiment, two plots allow to see the learning progress:
