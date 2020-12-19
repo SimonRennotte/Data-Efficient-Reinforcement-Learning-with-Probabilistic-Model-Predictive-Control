@@ -57,7 +57,7 @@ The cost of the path is the average cost expected over the horizon as a result o
 - 3d visualizations that shows the Gaussian processes model and points in memory. In this plot, each of the graphs on the top line represents the variation in status as a function of the state of the inputs and actions. By definition, the action indices are higher than the state indices.
 The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the gaussian process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs on the bottom line represent the predicted uncertainty, and the points are the prediction errors.
 The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
-Note that the uncertainty represented in the 3d graph does not represent the exact uncertainty on the points, since the last dimension is not visible and has been defined using linear regression with the visible states as input.
+Note that the predictions and uncertainty represented on the 3d graphs do not represent the exact values, since the dimensions that some dimensions are not visible and have been defined using linear regression with the visible states as input. This explain why some points might not be on the prediction curve, and why the uncertainy is much higher than the prediction errors.
 
 ### Pendulum-v0
 
