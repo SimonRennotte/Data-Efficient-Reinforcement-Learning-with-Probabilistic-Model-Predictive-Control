@@ -28,7 +28,7 @@ for each state, one Gaussian process is used which has n (number of states) + m 
 The specificity of the paper lies in the fact that uncertainties propagate during trajectory calculations, which allows to calculate the loss, but also the uncertainty of the loss in the window of the simulation horizon. This makes it possible to explore more efficiently by visiting states where the uncertainty of the loss is high. It can also be used to get a real-time idea of the model's certainty about the future. Uncertainty can also be used to impose security constraints. This can be done by prohibiting visits to states where the uncertainty is too high, by imposing constraints on the lower or upper limit of the state confidence interval. This method is already used for safe Bayesian optimization. For example, it has been used [to optimize UAV controllers to avoid crashes during optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
 
 This approach allows learning fast enough to enable online learning from scratch, which opens up many possibilities for LR in new applications. 
-The following results are reported for the double inverted pendulum. 
+The following results are reported in the original paper for the double inverted pendulum. 
 
 ![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
