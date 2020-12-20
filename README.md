@@ -93,10 +93,11 @@ Compared to the implementation in the document, the scripts have been designed t
 - The optimized function in the mpc is the lower confidence bound of the expected long-term cost to reward exploration and avoid getting stuck in a local minimum.
 - The environment is not reset, learning is done in one go. Thus, the hyper-parameters training can not be done between trials. The learning of the hyperparameters and the storage of the visualizations are performed in a parallel process at regular time intervals in order to minimize the computation time at each control iteration.
 - An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
+- Constrainsts on states are not available yet
 
 An option has been added to repeat the predicted actions, so that a longer time horizon can be used with the MPC, which is crucial for certain environments such as the mountain car. 
 
-Finally, the implementation is not complete yet. analytical derivatives of the cost function and Gaussian processes are not used to find the optimal control. To be precise, the analytical derivates of the fmm and lmm functions have yet to be computed. These are needed to compute the hamiltonians used for the Pontryagin maximum principle. This explains why the computation times are so important in the current implementation that naively uses gradient descent (LBFGS) to find the optimal actions. The optimization of the hamiltonian has been replaced by the optimization of the predicted long term cost. Therefore, current processing times are higher. The animations displayed do not show the computation times between each iteration. To have lower computation time, you can reduce the horizon, but it will decrease the performances.
+Finally, the implementation is not complete yet. The current optimization uses gradient descent directly on the lower confidence bound of the total cost of the predicted horizon to find the optimal actions. It must be changed to be a point-wise optimization of the hamiltonians, as in the paper implementation. This explains why the computation times are so important in the current implementation. The animations displayed do not show the computation times between each iteration. To have lower computation time, you can reduce the horizon, but it will decrease the performances.
 
 ## Limitations
 
@@ -164,7 +165,7 @@ http://www.gaussianprocess.org/gpml/
 https://github.com/nrontsis/PILCO
 
 ## Cite this work
-If my implementation has been useful to you, please cite thsi github in your research. Thank you.
+If my implementation has been useful to you, please cite this github in your research. Thank you.
 
 ## Contact me
 You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
