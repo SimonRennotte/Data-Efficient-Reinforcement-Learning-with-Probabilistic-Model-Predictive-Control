@@ -28,26 +28,13 @@ The proposed framework demonstrates superior data efficiency and learning rates 
   * [Limitations](##Limitations)
   * [Installation](##Installation)
   * [How to run](##Run)
+  * [TODO](##TODO)
   * [Ressources](##Ressources)
+    * [Summary](###Summary)
     * [Talks/Tutorials](###Talks/Tutorials)
     * [Papers](###Papers)
     * [Textbooks](###Textbooks)
     * [Projects](###Projects)
-    
-### Concept summary
-The approach uses a model to control the environment. This method is called Model Predictive Control (MPC) and is commonly used in process control theory. At each interaction with the real environment, the optimal action is obtained through an iterative approach. The model is used to evaluate certain actions over a fixed time horizon using a simulation by predicting the evolution of states with the model, and calculating the corresponding loss. This simulation is used several times at each interaction with the real world to find the optimal actions in the time horizon window with a gradient descent optimizer (for the current implementation). The first control of the time horizon is then used for the next action in the real world. In traditional control theory, the model is a mathematical model obtained from theory. Here, the model is a Gaussian process. 
-
-Gaussian processes are used to predict the variation of states as a function of states and input actions. The predictions have the form of a distribution, which also allows the uncertainty of these predictions. Gaussian processes are defined by a mean and covariance function, and store previous points (states(t), actions(t), (states(t+1) - states(t))) in memory. To compute the new predictions, the covariance between the new points and the points stored in memory is calculated, which allows, with a little mathematics, to obtain the predicted distribution. Conceptually, Gaussian processes can be seen as if they were looking at adjacent points in memory to compute predictions at new points. Depending on the distance between the new point and the points stored in memory, the uncertainty will be greater or smaller. In our case, 
-for each state, one Gaussian process is used which has n (number of states) + m (number of actions) inputs, and n number of outputs that is used to predict the variation of that state.
-
-The specificity of the paper lies in the fact that uncertainties propagate during trajectory calculations, which allows to calculate the loss, but also the uncertainty of the loss in the window of the simulation horizon. This makes it possible to explore more efficiently by visiting states where the uncertainty of the loss is high. It can also be used to get a real-time idea of the model's certainty about the future. Uncertainty can also be used to impose security constraints. This can be done by prohibiting visits to states where the uncertainty is too high, by imposing constraints on the lower or upper limit of the state confidence interval. This method is already used for safe Bayesian optimization. For example, it has been used [to optimize UAV controllers to avoid crashes during optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
-
-This approach allows learning fast enough to enable online learning from scratch, which opens up many possibilities for Reinforcement Learning in new applications, with some more research. 
-The following results are reported in the original paper for the double inverted pendulum. 
-
-![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
-
-Finally, an interesting feature of using this model based reinforcement learning method that was not investigated in the original paper, is the possibility to learn the model from trajectories that were obtained by other controllers, such as humans. It is thus possible to show some examples of good actions in an environment before using this method to show the agent how the environment works and speed the learning even more.
     
 ## Experiments
 For each experiment, two plots allow to see the learning progress:
@@ -126,7 +113,7 @@ And activate it with:
 Depending on your platform, you may have to modify the yml file to install pytorch following the instructions [here](https://pytorch.org/get-started/locally/)
 ## Run
 To use the script
-The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, and the usage of vizualisations.
+The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, and the parameters relative to visualizations.
 
 For each gym environment, a json file containing the gym environment name contains all the parameters relative to this environement, and the control used.
 The syntax is parameters_"gym_env_name".json
@@ -138,7 +125,33 @@ The syntax is parameters_"gym_env_name".json
 
 To use the model on a different gym environement, an other json file must be created, which contains the same structure and parameters, but with different values.
 
+The plots and animations will be saved in the folder "folder_save", with the following structure:
+folder_save => environment name => time and date of the run
+
+## TODO
+This github is under active development. If you detect any bugs or potential improvements, please let me know.
+The following features are still to be developed :
+- A fast optimizer to find optimal actions using the analytical derivative. The current optimization step takes 1 to 20 seconds.
+- Constraints on the lower and upper limit of states
+- Dynamic representation of the model and the predicted trajectory in graphs updated in real time
+- Gym environment with discrete states and actions
+
 ## Ressources
+
+### Summary
+The approach uses a model to control the environment. This family of methods are called Model Predictive Control (MPC). At each interaction with the real environment, the optimal action is obtained through an iterative approach. The model is used to evaluate certain actions over a fixed time horizon in a simulation of the environment with the learned model. This simulation is used several times at each interaction with the real world to find the optimal actions in the time horizon window with a optimizer. The first control of the time horizon is then used for the next action in the real world. In traditional control theory, the model is a mathematical model obtained from theory. Here, the model is a Gaussian process that learns from observed data. 
+
+Gaussian processes are used to predict the variation of states as a function of states and input actions. The predictions have the form of a distribution, which also allows the uncertainty of these predictions. Gaussian processes are defined by a mean and covariance function, and store previous points (states(t), actions(t), (states(t+1) - states(t))) in memory. To compute the new predictions, the covariance between the new points and the points stored in memory is calculated, which allows, with a little mathematics, to obtain the predicted distribution. Conceptually, Gaussian processes can be seen as if they were looking at adjacent points in memory to compute predictions at new points. Depending on the distance between the new point and the points stored in memory, the uncertainty will be greater or smaller. In our case, 
+for each state, one Gaussian process is used which has n (number of states) + m (number of actions) inputs, and 1 output that is used to predict the variation of that state.
+
+The specificity of the paper lies in the fact that uncertainties propagate during trajectory calculations, which allows to calculate the loss, but also the uncertainty of the loss in the window of the simulation horizon. This makes it possible to explore more efficiently by visiting states where the uncertainty of the loss is high. It can also be used to get a real-time idea of the model's certainty about the future. Uncertainty can also be used to impose security constraints. This can be done by prohibiting visits to states where the uncertainty is too high, by imposing constraints on the lower or upper limit of the state confidence interval. This method is already used for safe Bayesian optimization. For example, it has been used [to optimize UAV controllers to avoid crashes during optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
+
+This approach allows learning fast enough to enable online learning from scratch, which opens up many possibilities for Reinforcement Learning in new applications, with some more research. 
+The following results are reported in the original paper for the double inverted pendulum. 
+
+![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
+
+Finally, an interesting feature of using this model based reinforcement learning method that was not investigated in the original paper, is the possibility to learn the model from trajectories that were obtained by other controllers, such as humans. It is thus possible to show some examples of good actions in an environment before using this method to show the agent how the environment works and speed the learning even more.
 
 ### Talks/Tutorials
 
@@ -150,11 +163,11 @@ Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
 ### Papers
 
-PILCO paper: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
-
 Original paper: https://deepai.org/publication/data-efficient-reinforcement-learning-with-probabilistic-model-predictive-control
 
-Thesis: https://deisenroth.cc/pdf/thesis.pdf
+PILCO paper: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
+
+Marc deisenroth thesis: https://deisenroth.cc/pdf/thesis.pdf
 
 ### Textbooks
 
@@ -170,5 +183,5 @@ If my implementation has been useful to you, please cite this github in your res
 ## Contact me
 You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
 
-I plan to do my PHD in UMontreal in the fall of 2021 or the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality, noise, delayed reward, no reward, etc. 
+I plan to do my PHD in UMontreal or UCL in the fall of 2021 or the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
 If you know someone there or work there yourself, I would like to chat to have more informations. Thank you ! 
