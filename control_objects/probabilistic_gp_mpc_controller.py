@@ -225,49 +225,6 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		self.costs_trajectory_variance = costs_trajectory_variance.detach()
 
 		return cost_trajectory.detach().numpy(), gradients_cost[:, 0].detach().numpy()
-		'''mu_states_pred = torch.empty((self.len_horizon + 1, len(mu_observation)))
-		costs_trajectory = torch.empty((self.len_horizon + 1,))
-		s_states_pred = torch.empty((self.len_horizon + 1, self.num_outputs, self.num_outputs))
-		costs_trajectory_variance = torch.empty_like(costs_trajectory)
-		mu_states_pred[0] = mu_observation
-		s_states_pred[0] = s_observation
-		costs_trajectory[0], costs_trajectory_variance[0] = self.cost_fct_on_uncertain_inputs(mu_states_pred[0],
-											s_states_pred[0], actions[0], torch.zeros_like(actions[0]))
-		for idx_time in range(1, self.len_horizon + 1):
-			''''''s = self.s_states_pred[idx_time - 1]
-			s1 = torch.cat((s, torch.Tensor([[0]]).repeat(self.num_outputs, 1)), axis=1)
-			s = torch.cat((s1, torch.Tensor([[0]]).repeat(1, len(s1[0]))), axis=0)
-			s[-1, -1] = torch.Tensor([0])''''''
-			s_inputs_pred = torch.zeros((s_states_pred.shape[1] + actions.shape[1], s_states_pred.shape[2] + actions.shape[1]))
-			s_inputs_pred[:s_states_pred.shape[1], :s_states_pred.shape[2]] = s_states_pred[idx_time - 1]
-			d_state, d_s_state, v = self.predict_given_factorizations(
-									torch.cat((mu_states_pred[idx_time - 1], actions[idx_time - 1]), axis=0),
-									s_inputs_pred, iK, beta)
-			mu_states_pred[idx_time] = torch.clamp(mu_states_pred[idx_time - 1] + d_state, 0, 1)
-			s_states_pred[idx_time] = d_s_state + s_states_pred[idx_time - 1] + \
-									  s_inputs_pred[:s_states_pred.shape[1]] @ v + \
-										v.t() @ s_inputs_pred[:, :s_states_pred.shape[1]]
-			''''''self.s_states_pred[idx_time - 1] + s1 @ v + \
-										   torch.matmul(v.t(), s1.t())''''''
-			if idx_time == self.len_horizon:
-				costs_trajectory[-1], costs_trajectory_variance[-1] = \
-					self.terminal_cost(mu_states_pred[-1], s_states_pred[-1])
-			else:
-				costs_trajectory[idx_time], costs_trajectory_variance[idx_time] = \
-					self.cost_fct_on_uncertain_inputs(mu_states_pred[idx_time], s_states_pred[idx_time],
-							actions[idx_time], torch.zeros_like(actions[0]))
-		lcb_losses = torch.clamp(costs_trajectory -
-								 self.exploration_factor * torch.sqrt(costs_trajectory_variance), 0, np.inf)
-		cost_trajectory_mean_lcb = torch.mean(lcb_losses)
-		gradients = torch.autograd.grad(cost_trajectory_mean_lcb.sum(), actions, retain_graph=False)[0]
-
-		self.cost_trajectory_mean_lcb = cost_trajectory_mean_lcb
-		self.mu_states_pred = mu_states_pred
-		self.costs_trajectory = costs_trajectory
-		self.s_states_pred = s_states_pred
-		self.costs_trajectory_variance = costs_trajectory_variance
-
-		return cost_trajectory_mean_lcb, gradients'''
 
 	def calculate_factorizations(self):
 		K = torch.stack([model.covar_module(self.x[:self.num_points_memory]).evaluate() for model in self.models])
