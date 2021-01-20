@@ -3,7 +3,7 @@
 
 Example of control agents learning from scratch
 ## Overview
-Implementation of the paper [Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control](https://arxiv.org/pdf/1706.06491v1.pdf) with pytorch and gpytorch.
+Unofficial implementation of the paper [Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control](https://arxiv.org/pdf/1706.06491v1.pdf) with pytorch and gpytorch.
 
 ### Abstract of the paper
 Trial-and-error based reinforcement learning (RL) has seen rapid advancements in recent times, especially with the advent of deep neural networks. 
@@ -39,28 +39,32 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ## Experiments
 For each experiment, two plots allow to see the learning progress:
 
-- A time graph, which plots the evolution of states in the top left corner, and actions in the top right corner. Prediction errors and predicted uncertainty are plotted on the bottom left. The loss and cost of the trajectory as well as its uncertainty are plotted on the bottom right. 
-The cost of the path is the average cost expected over the horizon as a result of the planned actions of the MPC. Note that the uncertainty of the loss over the horizon can be used to identify states where the future is uncertain for the model.
 
-- 3d visualizations that shows the Gaussian processes model and points in memory. In this plot, each of the graphs on the top line represents the variation in status as a function of the state of the inputs and actions. By definition, the action indices are higher than the state indices.
-The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the gaussian process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs on the bottom line represent the predicted uncertainty, and the points are the prediction errors.
-The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
-Note that the predictions and uncertainty represented on the 3d graphs do not represent the exact values, since the dimensions that some dimensions are not visible and have been defined using linear regression with the visible states as input. This explain why some points might not be on the prediction curve, and why the uncertainy is much higher than the prediction errors.
+
+- A time graph that shows how the control variables evolve.
+   - The top graph: states along with the predicted states and uncertainty from n time steps prior. The value of n is specified in the legend. 
+   - The middle graph: actions
+   - The bottom graph: The actual cost, predicted trajectory cost (mean of future predicted cost) and its uncertainty. Note that the uncertainty of the trajectory cost can be        used to identify times where the future is uncertain for the model.
+
+- 3d visualizations that shows the Gaussian processes model and points in memory. 
+     In this plot, each of the graphs on the top line represents the variation in status as a function of the state of the inputs and actions. The indices represented in the axis name represent either states or actions. Action indices are higher than the state indices. For example, the input with index 3 represent the action for the pendulum.
+     The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the gaussian process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs on the bottom line represent the predicted uncertainty, and the points are the prediction errors.
+     The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
 
 ### Pendulum-v0
 
-![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim.gif?)
+![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_pendulum.gif?)
 
 The following figure shows the time graph for the inverted pendulum that is shown in the animation :
 
-![stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_example.png?raw=true)
+![stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_pendulum.png?raw=true)
 
 We can see that the model allows to control the environment in about a hundred interactions with the environment from scratch.
 As a comparison, the state of the art of model free reinforcement learning algorithms that I found in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment. 
 
 The gaussian process models along the points in memory are represented in the following figure.
 
-![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_example.png?raw=true)
+![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true)
 
 ### MountainCarContinuous-v0
 
