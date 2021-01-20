@@ -47,7 +47,7 @@ For each experiment, two plots allow to see the learning progress:
    - The bottom graph: The actual cost, predicted trajectory cost (mean of future predicted cost) and its uncertainty. Note that the uncertainty of the trajectory cost can be        used to identify times where the future is uncertain for the model.
 
 - 3d visualizations that shows the Gaussian processes model and points in memory. 
-     In this plot, each of the graphs on the top line represents the variation in status as a function of the state of the inputs and actions. The indices represented in the axis name represent either states or actions. Action indices are higher than the state indices. For example, the input with index 3 represent the action for the pendulum.
+     In this plot, each of the graphs on the top line represents the variation of states for the next step as a function of the current states and actions. The indices represented in the xy axis name represent either states or actions. For example, the input with index 3 represent the action for the pendulum. Action indices are defined as higher than the state indices.
      The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the gaussian process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs on the bottom line represent the predicted uncertainty, and the points are the prediction errors.
      The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
 
@@ -85,18 +85,17 @@ Compared to the implementation in the document, the scripts have been designed t
 - The environment is not reset, learning is done in one go. Thus, the hyper-parameters training can not be done between trials. The learning of the hyperparameters and the storage of the visualizations are performed in a parallel process at regular time intervals in order to minimize the computation time at each control iteration.
 - An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
 - Constrainsts on states are not available yet
+- The optimizer for actions is LBFGS directly applied on the actions. The particular structure of the problem is not used to speed the computation times, which is why the time between iterations is high. The animations displayed do not show the computation times between each iteration. 
 
 An option has been added to repeat the predicted actions, so that a longer time horizon can be used with the MPC, which is crucial for certain environments such as the mountain car. 
-
-Finally, the implementation is not complete yet. The current optimization uses gradient descent directly on the lower confidence bound of the total cost of the predicted horizon to find the optimal actions. It must be changed to be a point-wise optimization of the hamiltonians, as in the paper implementation. This explains why the computation times are so important in the current implementation. The animations displayed do not show the computation times between each iteration. To have lower computation time, you can reduce the horizon, but it will decrease the performances.
 
 ## Limitations
 
 - The cost function must be clearly defined as a squared distance function of the states/observations
-- The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can also be a problem when the dimensionality of the action space is too high.
+- The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can also be a problem when the dimensionality of the action space is too high. To have lower computation time, you can reduce the horizon, but it will decrease the performances.
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately). 
 - If too much points are stored in the memory of the gaussian process, the computation times might become very high. The computation times scale in n³.
-- The current implementation will not not with environement with discrete states
+- The current implementation will not work for gym environments with discrete states
 
 ## Installation
 ### Dependencies
@@ -135,7 +134,7 @@ folder_save => environment name => time and date of the run
 ## TODO
 This github is under active development. If you detect any bugs or potential improvements, please let me know.
 The following features are still to be developed :
-- A fast optimizer to find optimal actions using the analytical derivative. The current optimization step takes 1 to 20 seconds.
+- A faster optimizer
 - Constraints on the lower and upper limit of states
 - Dynamic representation of the model and the predicted trajectory in graphs updated in real time
 - Gym environment with discrete states and actions
