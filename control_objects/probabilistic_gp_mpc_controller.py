@@ -36,12 +36,14 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		self.step_print_train = params_train['step_print_train']
 		self.constraints = constraints
 		self.params_actions_optimizer = params_actions_optimizer
-		self.prediction_info_over_time = {}
 		self.limit_derivative_actions = params_controller['limit derivative actions']
 		self.max_derivative_action_norm = params_controller['max derivative actions norm']
+		self.clip_lower_bound_cost_to_0 = params_controller['clip_lower_bound_cost_to_0']
 		self.folder_save = folder_save
 		self.env_to_control = env_to_control
 		self.num_repeat_actions = num_repeat_actions
+
+		self.prediction_info_over_time = {}
 		self.indexes_memory_gp = []
 		if self.limit_derivative_actions:
 			min_d_actions = -self.max_derivative_action_norm
@@ -129,13 +131,17 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		return (state - self.target_state).t() @ self.weight_matrix_cost_function @ (state - self.target_state)
 
 	def cost_fct_on_uncertain_inputs(self, m_state, s_state, m_action, s_action):
+		'''This function computes the quadratic cost of a state given the weight matrix, and target state.
+		m_state and s_state can be either the full trajectory (m_state.ndim=2 and s_state.ndim=3),
+		or a single state (m_state.ndim=1 and s_state.ndim=2)'''
 		error = m_state - self.target_state
-		mean_cost = torch.trace(torch.matmul(s_state, self.weight_matrix_cost_function)) + \
-					torch.matmul(torch.matmul(error.t(), self.weight_matrix_cost_function), error)
+		mean_cost = torch.diagonal(torch.matmul(s_state, self.weight_matrix_cost_function), dim1=-1, dim2=-2).sum(-1) + \
+					torch.matmul(torch.matmul(error[..., None].transpose(-1, -2), self.weight_matrix_cost_function),
+						error[..., None]).squeeze()
 		TS = self.weight_matrix_cost_function @ s_state
-		s_cost_term_1 = torch.trace(2 * TS @ TS)
+		s_cost_term_1 = torch.diagonal(2 * TS @ TS, dim1=-1, dim2=-2).sum(-1)
 		s_cost_term_2 = TS @ self.weight_matrix_cost_function
-		s_cost_term_3 = 4 * error.t() @ s_cost_term_2 @ error
+		s_cost_term_3 = (4 * error[..., None].transpose(-1, -2) @ s_cost_term_2 @ error[..., None]).squeeze()
 		s_cost = s_cost_term_1 + s_cost_term_3
 		return mean_cost, s_cost
 
@@ -161,46 +167,107 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		s_dcost = self.weight_matrix_cost_function
 		return mean_dcost, s_dcost
 
-	def compute_cost_trajectory(self, actions, mu_observation, s_observation, iK, beta):
-		self.mu_states_pred = torch.empty((self.len_horizon + 1, len(mu_observation)))
-		self.costs_trajectory = torch.empty((self.len_horizon + 1,))
-		self.exploration_score = torch.empty((self.len_horizon + 1,))
-		self.s_states_pred = torch.empty((self.len_horizon + 1, self.num_outputs, self.num_outputs))
-		self.costs_trajectory_variance = torch.empty_like(self.costs_trajectory)
+	def predict_trajectory(self, actions, mu_observation, s_observation, iK, beta):
+		''' function that computes the future predicted states mu_states_pred and predicted uncertainty of the states
+			via the covariance matrix of the states s_states_pred, given the current state mu_observation,
+			current covariance matrix of the state s_observation, and planned actions (actions.shape = (len_horizon, num_actions))
+		 	It also computes the losses, the variance of the loss, and the lower cofidence bound of the loss
+		 	along the trajectory'''
+		mu_states_pred = torch.empty((self.len_horizon + 1, len(mu_observation)))
+		s_states_pred = torch.empty((self.len_horizon + 1, self.num_outputs, self.num_outputs))
 
-		actions = np.atleast_2d(actions.reshape(self.len_horizon, -1))
-		if self.limit_derivative_actions:
-			actions = torch.Tensor(actions.copy())
-			actions[0] += self.action_previous_iter
-			actions = torch.clamp(torch.cumsum(actions, dim=0), 0, 1)
-		else:
-			actions = torch.Tensor(actions)
-		self.mu_states_pred[0] = mu_observation
-		self.s_states_pred[0] = s_observation
-		self.costs_trajectory[0], self.costs_trajectory_variance[0] = self.cost_fct_on_uncertain_inputs(self.mu_states_pred[0],
-											self.s_states_pred[0], actions[0], torch.zeros_like(actions[0]))
-		self.exploration_score[0] = 0
+		mu_states_pred.requires_grad = True
+		s_states_pred.requires_grad = True
+		mu_states_pred[0] = torch.Tensor(mu_observation)
+		s_states_pred[0] = torch.Tensor(s_observation)
+		# torch.cat((s_states_pred, torch.Tensor([[[0]]]).repeat(
+					# s_states_pred.shape[0], self.num_outputs, 1)), axis=2)
 		for idx_time in range(1, self.len_horizon + 1):
-			m = self.mu_states_pred[idx_time - 1]
-			m = torch.cat((m, actions[idx_time - 1]), axis=0)
-			s = self.s_states_pred[idx_time - 1]
+			s_inputs_pred = torch.zeros((s_states_pred.shape[1] + actions.shape[1], s_states_pred.shape[2] + actions.shape[1]))
+			s_inputs_pred[:s_states_pred.shape[1], :s_states_pred.shape[2]] = s_states_pred[idx_time - 1]
+			d_state, d_s_state, v = self.predict_given_factorizations(
+				torch.cat((mu_states_pred[idx_time - 1], actions[idx_time - 1]), axis=0),
+				s_inputs_pred, iK, beta)
+			mu_states_pred[idx_time] = mu_states_pred[idx_time - 1] + d_state  # torch.clamp(, 0, 1)
+			s_states_pred[idx_time] = d_s_state + s_states_pred[idx_time - 1] + \
+									  s_inputs_pred[:s_states_pred.shape[1]] @ v + \
+										v.t() @ s_inputs_pred[:, :s_states_pred.shape[1]]
+
+		costs_trajectory, costs_trajectory_variance = self.cost_fct_on_uncertain_inputs(mu_states_pred[:-1],
+				s_states_pred[:-1], actions, torch.zeros_like(actions))
+		cost_trajectory_final, costs_trajectory_variance_final = self.terminal_cost(mu_states_pred[-1], s_states_pred[-1])
+		costs_trajectory = torch.cat((costs_trajectory, cost_trajectory_final[None]), 0)
+		costs_trajectory_variance = torch.cat((costs_trajectory_variance, costs_trajectory_variance_final[None]), 0)
+		costs_trajectory_lcb = costs_trajectory - self.exploration_factor * torch.sqrt(costs_trajectory_variance)
+		return mu_states_pred, s_states_pred, costs_trajectory, costs_trajectory_variance, costs_trajectory_lcb
+
+	def compute_cost_trajectory(self, actions, mu_observation, s_observation, iK, beta):
+		actions = np.atleast_2d(actions.reshape(self.len_horizon, -1))
+		actions = torch.Tensor(actions)
+		actions.requires_grad = True
+		if self.limit_derivative_actions:
+			actions_input = actions.clone()
+			actions_input[0] = self.action_previous_iter + actions_input[0]
+			actions_input = torch.clamp(torch.cumsum(actions_input, dim=0), 0, 1)
+		else:
+			actions_input = actions
+		mu_states_pred, s_states_pred, costs_trajectory, costs_trajectory_variance, costs_trajectory_lcb = \
+			self.predict_trajectory(actions_input, mu_observation, s_observation, iK, beta)
+		if self.clip_lower_bound_cost_to_0:
+			costs_trajectory_lcb = torch.clamp(costs_trajectory_lcb, 0, np.inf)
+		cost_trajectory = costs_trajectory_lcb.mean()
+		gradients_cost = torch.autograd.grad(cost_trajectory, actions, retain_graph=False)[0]
+
+		self.cost_trajectory_mean_lcb = cost_trajectory.detach()
+		self.mu_states_pred = mu_states_pred.detach()
+		self.costs_trajectory = costs_trajectory.detach()
+		self.s_states_pred = s_states_pred.detach()
+		self.costs_trajectory_variance = costs_trajectory_variance.detach()
+
+		return cost_trajectory.detach().numpy(), gradients_cost[:, 0].detach().numpy()
+		'''mu_states_pred = torch.empty((self.len_horizon + 1, len(mu_observation)))
+		costs_trajectory = torch.empty((self.len_horizon + 1,))
+		s_states_pred = torch.empty((self.len_horizon + 1, self.num_outputs, self.num_outputs))
+		costs_trajectory_variance = torch.empty_like(costs_trajectory)
+		mu_states_pred[0] = mu_observation
+		s_states_pred[0] = s_observation
+		costs_trajectory[0], costs_trajectory_variance[0] = self.cost_fct_on_uncertain_inputs(mu_states_pred[0],
+											s_states_pred[0], actions[0], torch.zeros_like(actions[0]))
+		for idx_time in range(1, self.len_horizon + 1):
+			''''''s = self.s_states_pred[idx_time - 1]
 			s1 = torch.cat((s, torch.Tensor([[0]]).repeat(self.num_outputs, 1)), axis=1)
 			s = torch.cat((s1, torch.Tensor([[0]]).repeat(1, len(s1[0]))), axis=0)
-			s[-1, -1] = torch.Tensor([0])
-			d_state, d_s_state, v = self.predict_given_factorizations(m, s, iK, beta)
-			self.mu_states_pred[idx_time] = torch.clamp(self.mu_states_pred[idx_time - 1] + d_state, 0, 1)
-			self.s_states_pred[idx_time] = d_s_state + self.s_states_pred[idx_time - 1] + s1 @ v + \
-										   torch.matmul(v.t(), s1.t())
+			s[-1, -1] = torch.Tensor([0])''''''
+			s_inputs_pred = torch.zeros((s_states_pred.shape[1] + actions.shape[1], s_states_pred.shape[2] + actions.shape[1]))
+			s_inputs_pred[:s_states_pred.shape[1], :s_states_pred.shape[2]] = s_states_pred[idx_time - 1]
+			d_state, d_s_state, v = self.predict_given_factorizations(
+									torch.cat((mu_states_pred[idx_time - 1], actions[idx_time - 1]), axis=0),
+									s_inputs_pred, iK, beta)
+			mu_states_pred[idx_time] = torch.clamp(mu_states_pred[idx_time - 1] + d_state, 0, 1)
+			s_states_pred[idx_time] = d_s_state + s_states_pred[idx_time - 1] + \
+									  s_inputs_pred[:s_states_pred.shape[1]] @ v + \
+										v.t() @ s_inputs_pred[:, :s_states_pred.shape[1]]
+			''''''self.s_states_pred[idx_time - 1] + s1 @ v + \
+										   torch.matmul(v.t(), s1.t())''''''
 			if idx_time == self.len_horizon:
-				self.costs_trajectory[-1], self.costs_trajectory_variance[-1] = self.terminal_cost(self.mu_states_pred[-1], self.s_states_pred[-1])
+				costs_trajectory[-1], costs_trajectory_variance[-1] = \
+					self.terminal_cost(mu_states_pred[-1], s_states_pred[-1])
 			else:
-				self.costs_trajectory[idx_time], self.costs_trajectory_variance[idx_time] = \
-					self.cost_fct_on_uncertain_inputs(self.mu_states_pred[idx_time], self.s_states_pred[idx_time],
+				costs_trajectory[idx_time], costs_trajectory_variance[idx_time] = \
+					self.cost_fct_on_uncertain_inputs(mu_states_pred[idx_time], s_states_pred[idx_time],
 							actions[idx_time], torch.zeros_like(actions[0]))
-		lcb_losses = torch.clamp(self.costs_trajectory -
-								 self.exploration_factor * torch.sqrt(self.costs_trajectory_variance), 0, np.inf)
-		self.cost_trajectory_mean_lcb = torch.mean(lcb_losses)
-		return self.cost_trajectory_mean_lcb
+		lcb_losses = torch.clamp(costs_trajectory -
+								 self.exploration_factor * torch.sqrt(costs_trajectory_variance), 0, np.inf)
+		cost_trajectory_mean_lcb = torch.mean(lcb_losses)
+		gradients = torch.autograd.grad(cost_trajectory_mean_lcb.sum(), actions, retain_graph=False)[0]
+
+		self.cost_trajectory_mean_lcb = cost_trajectory_mean_lcb
+		self.mu_states_pred = mu_states_pred
+		self.costs_trajectory = costs_trajectory
+		self.s_states_pred = s_states_pred
+		self.costs_trajectory_variance = costs_trajectory_variance
+
+		return cost_trajectory_mean_lcb, gradients'''
 
 	def calculate_factorizations(self):
 		K = torch.stack([model.covar_module(self.x[:self.num_points_memory]).evaluate() for model in self.models])
@@ -260,55 +327,39 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		return M.t(), S, V.t()
 
 	def compute_prediction_action(self, mu_observation, s_observation):
-		if 'p_train' in self.__dict__ and not self.p_train._closed and not(self.p_train.is_alive()):
-				params_dict_list = self.queue_train.get()
-				self.p_train.join()
-				for model_idx in range(len(self.models)):
-					self.models[model_idx].initialize(**params_dict_list[model_idx])
-				self.p_train.close()
-				self.num_cores_main += 1
-
-		if 'p_save_plot_history' in self.__dict__ \
-				and not self.p_save_plot_history._closed and not(self.p_save_plot_history.is_alive()):
-				self.p_save_plot_history.join()
-				self.p_save_plot_history.close()
-				self.num_cores_main += 1
-
-		if 'p_save_plot_model_3d' in self.__dict__ \
-				and not self.p_save_plot_model_3d._closed and not(self.p_save_plot_model_3d.is_alive()):
-				self.p_save_plot_model_3d.join()
-				self.p_save_plot_model_3d.close()
-				self.num_cores_main += 1
+		# Check for parallel process that are open but not alive at each iteration to retrieve the results and close them
+		self.check_and_close_processes()
 
 		with threadpool_limits(limits=self.num_cores_main, user_api='blas'), \
-				threadpool_limits(limits=self.num_cores_main, user_api='openmp'), torch.no_grad():
+				threadpool_limits(limits=self.num_cores_main, user_api='openmp'):
 			torch.set_num_threads(self.num_cores_main)
+			with torch.no_grad():
+				normed_mu_observation, normed_s_observation = self.norm(mu_observation, s_observation)
+				iK, beta = self.calculate_factorizations()
+				initial_actions_optimizer = (np.concatenate((self.predicted_actions_previous_iter[1:],
+									np.expand_dims(self.predicted_actions_previous_iter[-1], 0)), axis=0))
+				if self.limit_derivative_actions:
+					true_initial_action_optimizer = np.empty_like(initial_actions_optimizer)
+					true_initial_action_optimizer[0] = self.action_previous_iter
+					true_initial_action_optimizer += initial_actions_optimizer
+					true_initial_action_optimizer = np.cumsum(true_initial_action_optimizer, axis=0)
+					if np.logical_or(np.any(true_initial_action_optimizer > 1), np.any(true_initial_action_optimizer < 0)):
+						for idx_time in range(1, len(initial_actions_optimizer)):
+							true_initial_action_optimizer[idx_time] = true_initial_action_optimizer[idx_time - 1] + \
+																	 initial_actions_optimizer[idx_time]
+							indexes_above_1 = np.nonzero(true_initial_action_optimizer[idx_time] > 1)[0]
+							indexes_under_0 = np.nonzero(true_initial_action_optimizer[idx_time] < 0)[0]
+							initial_actions_optimizer[idx_time][indexes_above_1] = \
+								1 - true_initial_action_optimizer[idx_time - 1][indexes_above_1]
+							initial_actions_optimizer[idx_time][indexes_under_0] = \
+								- true_initial_action_optimizer[idx_time - 1][indexes_under_0]
+							true_initial_action_optimizer[idx_time][indexes_above_1] = 1
+							true_initial_action_optimizer[idx_time][indexes_under_0] = 0
 
-			normed_mu_observation, normed_s_observation = self.norm(mu_observation, s_observation)
-			iK, beta = self.calculate_factorizations()
-			initial_actions_optimizer = (np.concatenate((self.predicted_actions_previous_iter[1:],
-								np.expand_dims(self.predicted_actions_previous_iter[-1], 0)), axis=0))
-			if self.limit_derivative_actions:
-				true_initial_action_optimizer = np.empty_like(initial_actions_optimizer)
-				true_initial_action_optimizer[0] = self.action_previous_iter
-				true_initial_action_optimizer += initial_actions_optimizer
-				true_initial_action_optimizer = np.cumsum(true_initial_action_optimizer, axis=0)
-				if np.logical_or(np.any(true_initial_action_optimizer > 1), np.any(true_initial_action_optimizer < 0)):
-					for idx_time in range(1, len(initial_actions_optimizer)):
-						true_initial_action_optimizer[idx_time] = true_initial_action_optimizer[idx_time - 1] + \
-																 initial_actions_optimizer[idx_time]
-						indexes_above_1 = np.nonzero(true_initial_action_optimizer[idx_time] > 1)[0]
-						indexes_under_0 = np.nonzero(true_initial_action_optimizer[idx_time] < 0)[0]
-						initial_actions_optimizer[idx_time][indexes_above_1] = \
-							1 - true_initial_action_optimizer[idx_time - 1][indexes_above_1]
-						initial_actions_optimizer[idx_time][indexes_under_0] = \
-							- true_initial_action_optimizer[idx_time - 1][indexes_under_0]
-						true_initial_action_optimizer[idx_time][indexes_above_1] = 1
-						true_initial_action_optimizer[idx_time][indexes_under_0] = 0
-
-			initial_actions_optimizer = initial_actions_optimizer.flatten()
+				initial_actions_optimizer = initial_actions_optimizer.flatten()
 			res = minimize(fun=self.compute_cost_trajectory,
 			x0=initial_actions_optimizer,
+			jac=True,
 			args=(normed_mu_observation, normed_s_observation, iK, beta),
 			method='L-BFGS-B',
 			bounds=self.bounds,
@@ -316,34 +367,36 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			actions = res.x.reshape(self.len_horizon, -1)
 			self.predicted_actions_previous_iter = actions.copy()
 
-			if self.limit_derivative_actions:
-				actions[0] += np.array(self.action_previous_iter)
-				actions = np.clip(np.cumsum(actions, axis=0), 0, 1)
-				next_action = actions[0]
-			else:
-				next_action = actions[0]
-			self.action_previous_iter = next_action
-			cost, cost_var = self.cost_fct_on_uncertain_inputs(normed_mu_observation, normed_s_observation, actions[0], 0)
-			denorm_act = next_action[0] * (self.action_space.high - self.action_space.low) + self.action_space.low
-			# denorm_states = self.mu_states_pred[1:] * \
-			# (self.observation_space.high - self.observation_space.low) + self.observation_space.low
-			# denorm_std_states = std_states * (self.observation_space.high - self.observation_space.low)
-			std_states = torch.sqrt(torch.diagonal(self.s_states_pred, dim1=-2, dim2=-1))
-			add_info_dict = {'iteration': self.num_points_memory * self.num_repeat_actions,
-							'state': self.mu_states_pred[0],
-							'predicted states': self.mu_states_pred[1:],
-							'predicted states std': std_states[1:],
-							'predicted actions': actions,
-							'cost': cost.numpy(), 'cost std': np.sqrt(cost_var.numpy()),
-							'mean cost trajectory': np.mean(self.costs_trajectory.numpy()),
-							'mean cost trajectory std': np.mean(np.sqrt(self.costs_trajectory_variance.numpy())),
-							'lower bound cost trajectory': self.cost_trajectory_mean_lcb}
-			for key in add_info_dict.keys():
-				if not key in self.prediction_info_over_time:
-					self.prediction_info_over_time[key] = [add_info_dict[key]]
+			with torch.no_grad():
+				if self.limit_derivative_actions:
+					actions[0] += np.array(self.action_previous_iter)
+					actions = np.clip(np.cumsum(actions, axis=0), 0, 1)
+					next_action = actions[0]
 				else:
-					self.prediction_info_over_time[key].append(add_info_dict[key])
-			return denorm_act, add_info_dict
+					next_action = actions[0]
+				self.action_previous_iter = next_action
+				actions = torch.Tensor(actions)
+				cost, cost_var = self.cost_fct_on_uncertain_inputs(normed_mu_observation, normed_s_observation, actions[0], 0)
+				denorm_act = next_action[0] * (self.action_space.high - self.action_space.low) + self.action_space.low
+				# denorm_states = self.mu_states_pred[1:] * \
+				# (self.observation_space.high - self.observation_space.low) + self.observation_space.low
+				# denorm_std_states = std_states * (self.observation_space.high - self.observation_space.low)
+				std_states = torch.diagonal(self.s_states_pred, dim1=-2, dim2=-1).sqrt()
+				add_info_dict = {'iteration': self.num_points_memory * self.num_repeat_actions,
+								'state': self.mu_states_pred[0],
+								'predicted states': self.mu_states_pred[1:],
+								'predicted states std': std_states[1:],
+								'predicted actions': actions,
+								'cost': cost.item(), 'cost std': cost_var.sqrt().item(),
+								'mean cost trajectory': self.costs_trajectory.mean().item(),
+								'mean cost trajectory std': self.costs_trajectory_variance.sqrt().mean().item(),
+								'lower bound cost trajectory': self.cost_trajectory_mean_lcb.item()}
+				for key in add_info_dict.keys():
+					if not key in self.prediction_info_over_time:
+						self.prediction_info_over_time[key] = [add_info_dict[key]]
+					else:
+						self.prediction_info_over_time[key].append(add_info_dict[key])
+				return denorm_act, add_info_dict
 
 	def norm(self, state, state_s):
 		norm_state = (state - self.observation_space.low) / (self.observation_space.high - self.observation_space.low)
@@ -355,8 +408,6 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		if not ('p_save_plot_model_3d' in self.__dict__ and not self.p_save_plot_model_3d._closed):
 			self.p_save_plot_model_3d = self.ctx.Process(target=save_plot_model_3d_process,
 				args=(self.x[:self.num_points_memory], self.y[:self.num_points_memory],
-						self.models[0].train_inputs[0],
-						[model.train_targets for model in self.models],
 						[model.state_dict() for model in self.models],
 						self.constraints, self.folder_save, self.indexes_memory_gp, prop_extend_domain, n_ticks,
 						total_col_max, fontsize))
@@ -485,44 +536,23 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 
 			queue.put(params_dict_list)
 
-	# TODO: Optimize commands using hamiltonians, state constraints. Compute analytical derivates of lmm and fmm
-	def compute_hamiltonians(self, actions, observation, s_observation, iK, beta):
-		raise NotImplementedError()
-		'''self.hamiltonians = torch.empty((self.len_horizon,))
-		self.z = torch.empty((2, self.len_horizon + 1, len(observation)))
-		self.costs_trajectory = torch.empty((self.z.shape[0], self.z.shape[1]))
+	def check_and_close_processes(self):
+		if 'p_train' in self.__dict__ and not self.p_train._closed and not(self.p_train.is_alive()):
+			params_dict_list = self.queue_train.get()
+			self.p_train.join()
+			for model_idx in range(len(self.models)):
+				self.models[model_idx].initialize(**params_dict_list[model_idx])
+			self.p_train.close()
+			self.num_cores_main += 1
 
-		actions = torch.Tensor(actions)
-		self.z[0, 0] = observation
-		self.z[1, 0] = s_observation
-		self.costs_trajectory[0, 0], self.costs_trajectory[1, 0] = self.compute_cost_state(self.z[1, 0], self.z[1, 0])
-		self.exploration_score[0] = 0
-		n_actions = self.action_space.shape[0]  # , gpytorch.settings.fast_pred_var()
-		for idx_time in range(1, self.len_horizon + 1):
-			m = self.z[0, idx_time - 1]
-			m = torch.cat((m, actions[np.arange(n_actions) * n_actions + idx_time - 1]), axis=0)
-			s = self.z[1, idx_time - 1]
-			s1 = torch.cat((s, torch.Tensor([[0]]).repeat(self.num_outputs, 1)), axis=1)
-			s = torch.cat((s1, torch.Tensor([[0]]).repeat(1, len(s1[0]))), axis=0)
-			# add more possible actions, generalize
-			s[-1, -1] = torch.Tensor([0])
-			d_state, d_s_state, v = self.predict_given_factorizations(m, s, iK, beta)
-			self.z[0, idx_time] = torch.clamp(self.z[0, idx_time - 1] + d_state, 0, 1)
-			self.z[1, idx_time] = d_s_state + self.z[1, idx_time - 1] + s1 @ v + torch.matmul(v.t(), s1.t())
-			self.costs_trajectory[0, idx_time], self.costs_trajectory[1, idx_time] = self.compute_cost_state(self.z[0, idx_time],
-				self.z[1, idx_time])
+		if 'p_save_plot_history' in self.__dict__ \
+				and not self.p_save_plot_history._closed and not(self.p_save_plot_history.is_alive()):
+			self.p_save_plot_history.join()
+			self.p_save_plot_history.close()
+			self.num_cores_main += 1
 
-		self.lambdas = self.compute_lambdas(iK, beta)
-		# self.cost = torch.mean(self.costs_trajectory) - self.exploration_factor * torch.mean(self.exploration_score)'''
-
-	def compute_lambdas(self, iK, betas):
-		raise NotImplementedError()
-		'''self.lambdas = torch.empty((self.len_horizon + 1, self.num_outputs))
-		dl_dz = torch.empty_like(self.z)
-		dfmm_dz = torch.empty_like(self.z)
-		dl_dz[:, :, 0] = 2 * torch.matmul((self.z[..., 0] - self.target_state)[..., None].transpose(-2, -1),
-											self.weight_matrix_cost_function)
-		dl_dz[:, :, 1] = self.weight_matrix_cost_function
-		dfmm_dz[:, :, 0] = 0
-		dfmm_dz[:, :, 1] = 0
-		self.lambdas = 0'''
+		if 'p_save_plot_model_3d' in self.__dict__ \
+				and not self.p_save_plot_model_3d._closed and not(self.p_save_plot_model_3d.is_alive()):
+			self.p_save_plot_model_3d.join()
+			self.p_save_plot_model_3d.close()
+			self.num_cores_main += 1
