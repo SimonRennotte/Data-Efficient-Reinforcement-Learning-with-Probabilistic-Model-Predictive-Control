@@ -20,7 +20,6 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ---
 
 ## Table of contents
-  * [Concept summary](##Summary)
   * [Experiments](##Experiments)
     * [Pendulum-v0](###Pendulum-v0)
     * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
