@@ -126,9 +126,9 @@ The plots and animations will be saved in the folder "folder_save", with the fol
 folder_save => environment name => time and date of the run
 ### Json parameters to be specified for each gym environment
 - hyperparameters_init: initial values of the hyperparameters of the gaussian processes
-    - noise_std: vector representing the standard deviation of the uncertainty of predictions of the gaussian processes at known points (dim=(number of states)),
-		  - lengthscale: matrix representing the lengthscales for each input, and for each gaussian process (dim=(number of states, number of input))
-		  - scale: vector representing the scale of the gaussian processes (dim=(number of states)))
+    - noise_std: vector representing the standard deviation of the uncertainty of predictions of the gaussian processes at known points (dim=(number of states))
+    - lengthscale: matrix representing the lengthscales for each input, and for each gaussian process (dim=(number of states, number of input))
+    - scale: vector representing the scale of the gaussian processes (dim=(number of states)))
 
 - params_constraints: constrainsts on the hyperparameters of the gaussian processes 
     - min_std_noise: minimum value of the parameter noise_std (dim=scalar)
