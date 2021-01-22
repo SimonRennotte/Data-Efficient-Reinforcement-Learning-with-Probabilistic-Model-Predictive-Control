@@ -130,46 +130,44 @@ folder_save => environment name => time and date of the run
 		  - lengthscale: matrix representing the lengthscales for each input, and for each gaussian process (dim=(number of states, number of input))
 		  - scale: vector representing the scale of the gaussian processes (dim=(number of states)))
 
-	- params_constraints: constrainsts on the hyperparameters of the gaussian processes 
-     - min_std_noise: minimum value of the parameter noise_std (dim=scalar)
-     - max_std_noise: maximum value of the parameter noise_std (dim=scalar)
-     - min_outputscale: minimum value of the outputscales (dim=scalar)
-     - max_outputscale: maximum value of the outputscales (dim=scalar)
-     - min_lengthscale: minimum value of the lengthscales (dim=scalar)
-     - max_lengthscale: maximum value of the lengthscales (dim=scalar)
+- params_constraints: constrainsts on the hyperparameters of the gaussian processes 
+    - min_std_noise: minimum value of the parameter noise_std (dim=scalar)
+    - max_std_noise: maximum value of the parameter noise_std (dim=scalar)
+    - min_outputscale: minimum value of the outputscales (dim=scalar)
+    - max_outputscale: maximum value of the outputscales (dim=scalar)
+    - min_lengthscale: minimum value of the lengthscales (dim=scalar)
+    - max_lengthscale: maximum value of the lengthscales (dim=scalar)
      
-	- params_controller: parameters relative to the cost function and MPC
-     - target: The value of the states to attain to have a cost of 0 (dim=(number of states))
-     - weights_target: Weigths of each state in the cost function (dim=(number of states))
-     - weights_target_terminal_cost: Weigths of each state in the terminal cost function, at the end of the prediction horizon (dim=(number of states))
-     - s_observation: variance of the observations of states, if there is observation noise (dim=(number of states))
-     - len_horizon: length of the horizon used to find the optinal actions. The total horizon length in timesteps = len_horizon * num_repeat_actions (dim=scalar)
-     - num_repeat_actions: number of timesteps to repeat the planned actions
-     - exploration_factor: The value to be minimized is the sum of predicted cost - exploration_factor * sum of the predicted cost uncertainty. A higher value will lead to              more exploration (dim=scalar) 
-					- limit_derivative_actions: if set to 1, the variation of the normalized actions will be limited, from timestep to timestep by the parameter max_derivative_actions_norm              (dim=scalar)
-     - max_derivative_actions_norm: limitation on the variation of normalized actions if limit_derivative_actions is set to 1. (dim=scalar)
-     - clip_lower_bound_cost_to_0: if set to 1, the optimized cost (with exploration parameter) will be clipped to 0 if negative. This allows to stop exploration when the optimum is reached
+- params_controller: parameters relative to the cost function and MPC
+    - target: The value of the states to attain to have a cost of 0 (dim=(number of states))
+    - weights_target: Weigths of each state in the cost function (dim=(number of states))
+    - weights_target_terminal_cost: Weigths of each state in the terminal cost function, at the end of the prediction horizon (dim=(number of states))
+    - s_observation: variance of the observations of states, if there is observation noise (dim=(number of states))
+    - len_horizon: length of the horizon used to find the optinal actions. The total horizon length in timesteps = len_horizon * num_repeat_actions (dim=scalar)
+    - num_repeat_actions: number of timesteps to repeat the planned actions
+    - exploration_factor: The value to be minimized is the sum of predicted cost - exploration_factor * sum of the predicted cost uncertainty. A higher value will lead to more exploration (dim=scalar) 
+    - limit_derivative_actions: if set to 1, the variation of the normalized actions will be limited, from timestep to timestep by the parameter max_derivative_actions_norm (dim=scalar)
+    - max_derivative_actions_norm: limitation on the variation of normalized actions if limit_derivative_actions is set to 1. (dim=scalar)
+    - clip_lower_bound_cost_to_0: if set to 1, the optimized cost (with exploration parameter) will be clipped to 0 if negative. This allows to stop exploration when the optimum is reached
      
-	- params_train: parameters used for the training of the gaussian processes hyper parameters, done in a parallel process
-     - lr_train learning rate
-     - n_iter_train": number of training iteration
-     - train_every_n_points: training will occur at constant time interval. This parameter set the frequency of training process in number of time steps
-     - clip_grad_value: maximum value of the gradient of the trained parameters, for more stability
-					- print_train: if set to 1, the values optimized will be printed during training
-     - step_print_train: if print_train is set to 1, this parameter specifies the frequency of printing during training
+- params_train: parameters used for the training of the gaussian processes hyper parameters, done in a parallel process
+    - lr_train learning rate
+    - n_iter_train": number of training iteration
+    - train_every_n_points: training will occur at constant time interval. This parameter set the frequency of training process in number of time steps
+    - clip_grad_value: maximum value of the gradient of the trained parameters, for more stability
+    - print_train: if set to 1, the values optimized will be printed during training
+    - step_print_train: if print_train is set to 1, this parameter specifies the frequency of printing during training
      
-	- params_init: 
-     - num_random_actions_init: number of 
+- params_init: 
+    - num_random_actions_init: number of 
      
-	- params_actions_optimizer: parameters of the optimizer used to find the optimal actions by minimizing the lower bound of the predicted cost. 
-     See the scipy documentation: https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html?highlight=minimize 
-     Note: the jacobian is used for optimization, so the parameters eps is not used.
+- params_actions_optimizer: parameters of the optimizer used to find the optimal actions by minimizing the lower bound of the predicted cost. See the scipy documentation: https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html?highlight=minimize Note: the jacobian is used for optimization, so the parameters eps is not used.
      
-	- params_memory: parameters relative to memory storage. Every point is not stored in memory. Either the error of the prediction must be above a thresold or the standard deviation of the prediction uncertainty must be above a threshold
-     - min_error_prediction_prop_for_storage: minimum prediction error for each of the predicted states (dim=(number of states))
-					- min_prediction_std_prop_for_storage: minimum predicted standard deviation for each of the predicted states (dim=(number of states))
+- params_memory: parameters relative to memory storage. Every point is not stored in memory. Either the error of the prediction must be above a thresold or the standard deviation of the prediction uncertainty must be above a threshold
+    - min_error_prediction_prop_for_storage: minimum prediction error for each of the predicted states (dim=(number of states))
+    - min_prediction_std_prop_for_storage: minimum predicted standard deviation for each of the predicted states (dim=(number of states))
      
-	- num_steps_env: total number of steps in the environment
+- num_steps_env: total number of steps in the environment
  
 ## TODO
 This github is under active development. If you detect any bugs or potential improvements, please let me know.
