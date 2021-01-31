@@ -166,7 +166,7 @@ folder_save => environment name => time and date of the run
      - use_constraints: if set to 1, the constraints will be used, if set to 0, it will be ignored
      - states_min: minimum allowed value of the states (dim=(number of states))
      - states_max: maximum allowed value of the states (dim=(number of states))
-					- area_penalty_multiplier: At the moment, constraints on the states are added as a penalty in the predicted cost trajectory. The value of this penalty is the area of the        predicted state distribution that violate the constraints. This penalty is multiplied by this parameter 
+     - area_penalty_multiplier: At the moment, constraints on the states are added as a penalty in the predicted cost trajectory. The value of this penalty is the area of the        predicted state distribution that violate the constraints. This penalty is multiplied by this parameter 
      
 - params_train: parameters used for the training of the gaussian processes hyper parameters, done in a parallel process
     - lr_train learning rate
@@ -234,9 +234,6 @@ http://www.gaussianprocess.org/gpml/
 ### Projects
 
 https://github.com/nrontsis/PILCO
-
-## Cite this work
-If my implementation has been useful to you, please cite this github in your research. Thank you.
 
 ## Contact me
 You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
