@@ -20,20 +20,20 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ---
 
 ## Table of contents
-  **[Experiments](##Experiments)**<br>
-    **[Pendulum-v0](###Pendulum-v0)**<br>
-    **[MountainCarContinuous-v0](###MountainCarContinuous-v0)**<br>
-  **[Implementation differences from the paper](##Differences)**<br>
-  **[Limitations](##Limitations)**<br>
-  **[Installation](##Installation)**<br>
-  **[How to run](##Run)**<br>
-  **[TODO](##TODO)**<br>
-  **[Ressources](##Ressources)**<br>
-    **[Summary](###Summary)**<br>
-    **[Talks/Tutorials](###Talks/Tutorials)**<br>
-    **[Papers](###Papers)**<br>
-    **[Textbooks](###Textbooks)**<br>
-    **[Projects](###Projects)**<br>
+  * [Experiments](##Experiments)
+    * [Pendulum-v0](###Pendulum-v0)
+    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
+  * [Implementation differences from the paper](##Differences)
+  * [Limitations](##Limitations)
+  * [Installation](##Installation)
+  * [How to run](##Run)
+  * [TODO](##TODO)
+  * [Ressources](##Ressources)
+    * [Summary](###Summary)
+    * [Talks/Tutorials](###Talks/Tutorials)
+    * [Papers](###Papers)
+    * [Textbooks](###Textbooks)
+    * [Projects](###Projects)
     
 ## Experiments
 For each experiment, two plots allow to see the learning progress:
