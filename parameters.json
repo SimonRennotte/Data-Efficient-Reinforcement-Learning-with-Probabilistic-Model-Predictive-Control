@@ -1,6 +1,0 @@
-{
-	"general_parameters": {"env_to_control":  "MountainCarContinuous-v0", "render_env": 1, "verbose":  1,
-							"render_live_plot_model_3d": 0, "render_live_plot_history": 0,
-							"save_plot_history":  1, "save_plot_model_3d":  1,
-							"save_render_env": 1, "frequency_iter_save":  10}
-}

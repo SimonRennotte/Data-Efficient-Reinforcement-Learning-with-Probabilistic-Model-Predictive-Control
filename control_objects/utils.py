@@ -18,7 +18,7 @@ np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
 
 def save_plot_history_process(states, actions, states_next, prediction_info_over_time, folder_save,
-		num_repeat_actions=1, num_iter_prediction_ahead_show=3):
+		num_repeat_actions=1, constraints_states=None, num_iter_prediction_ahead_show=3):
 	with threadpool_limits(limits=1, user_api='blas'), threadpool_limits(limits=1, user_api='openmp'):
 		indexes = np.arange(0, len(states) * num_repeat_actions, num_repeat_actions)
 		fig, axes = plt.subplots(nrows=3, figsize=(12, 10))
@@ -42,7 +42,10 @@ def save_plot_history_process(states, actions, states_next, prediction_info_over
 				predictions_std_over_time_show[:-num_iter_prediction_ahead_show]])
 		mean_cost_traj = np.array([element for element in prediction_info_over_time['mean cost trajectory']])
 		mean_cost_traj_std = np.array([element for element in prediction_info_over_time['mean cost trajectory std']])
-
+		np.nan_to_num(predictions_over_time_show, copy=False, nan=-1, posinf=-1, neginf=-1)
+		np.nan_to_num(predictions_std_over_time_show, copy=False, nan=np.max(predictions_std_over_time_show), posinf=99, neginf=0)
+		np.nan_to_num(mean_cost_traj, copy=False, nan=-1, posinf=-1, neginf=-1)
+		np.nan_to_num(predictions_std_over_time_show, copy=False, nan=np.max(mean_cost_traj_std), posinf=99, neginf=0)
 		for state_idx in range(len(states[0])):
 			axes[0].plot(indexes, np.array(states)[:, state_idx], label='state' + str(state_idx),
 				color=plt.get_cmap('tab20').colors[2 * state_idx])
@@ -54,6 +57,13 @@ def save_plot_history_process(states, actions, states_next, prediction_info_over
 				predictions_over_time_show[:, state_idx] + predictions_std_over_time_show[:, state_idx],
 				label=str(num_iter_prediction_ahead_show * num_repeat_actions) + 'step_' + 'bounds_prediction' + str(state_idx),
 				color=plt.get_cmap('tab20').colors[2 * state_idx + 1], alpha=0.6)
+			if constraints_states is not None and constraints_states['use_constraints']:
+				axes[0].axhline(y=constraints_states['states_min'][state_idx],
+					color=plt.get_cmap('tab20').colors[2 * state_idx + 1],
+					linestyle='-.')
+				axes[0].axhline(y=constraints_states['states_max'][state_idx],
+					color=plt.get_cmap('tab20').colors[2 * state_idx + 1],
+					linestyle='-.')
 		costs = np.array([element for element in prediction_info_over_time['cost']])
 		axes[2].plot(list(indexes_control * num_repeat_actions), costs, label='cost', color='k')
 		axes[2].plot(list(indexes_control * num_repeat_actions), mean_cost_traj, label='cost trajectory', color='orange')
@@ -87,9 +97,12 @@ def save_plot_model_3d_process(input_data, output_data, parameters, constraints,
 		torch.set_num_threads(1)
 		num_input_model = len(input_data[0])
 		num_models = len(output_data[0])
-		indexes_points_outside_gp_memory = np.delete(np.arange(len(input_data)), indexes_points_in_gp_memory)
-		models = [ExactGPModelMonoTask(input_data[indexes_points_in_gp_memory],
-		output_data[[indexes_points_in_gp_memory], idx_model], len(input_data[0])) for idx_model in range(num_models)]
+		indexes_points_outside_gp_memory = \
+			[np.delete(np.arange(len(input_data)), indexes_points_in_gp_memory[idx_model]) for
+														idx_model in range(num_models)]
+		models = [ExactGPModelMonoTask(input_data[indexes_points_in_gp_memory[idx_model]],
+		output_data[[indexes_points_in_gp_memory[idx_model]], idx_model], num_input_model)
+												for idx_model in range(num_models)]
 		output_data = output_data.numpy()
 
 		for idx_model in range(num_models):
@@ -125,7 +138,7 @@ def save_plot_model_3d_process(input_data, output_data, parameters, constraints,
 			figs.append(fig)
 			for subplot_idx in range(columns_active):
 				index_observation_represent = index_figure * columns_active + subplot_idx
-				if index_observation_represent >= (output_data.shape[1]):
+				if index_observation_represent >= (num_models):
 					break
 				features_importance = (1 / models[index_observation_represent].covar_module.base_kernel.lengthscale).numpy()
 				features_importance = features_importance / np.sum(features_importance)
@@ -136,7 +149,7 @@ def save_plot_model_3d_process(input_data, output_data, parameters, constraints,
 						('model', LinearRegression())])'''
 				estimator_other_columns = Pipeline(
 					steps=[('standardscaler', StandardScaler()),
-						('features', KNeighborsRegressor(n_neighbors=7, weights='uniform'))])
+						('features', KNeighborsRegressor(n_neighbors=3, weights='distance'))])
 
 				estimator_other_columns.fit(input_data[:, best_features].numpy(),
 					np.delete(input_data.numpy(), best_features, axis=1))
@@ -156,9 +169,9 @@ def save_plot_model_3d_process(input_data, output_data, parameters, constraints,
 				y_grid_1d = np.expand_dims(y_grid.flatten(), axis=-1)
 				xy_grid = np.concatenate((x_grid_1d, y_grid_1d), axis=1)
 				predictions_other_columns = estimator_other_columns.predict(xy_grid)
-				all_columns = np.zeros((xy_grid.shape[0], input_data.shape[1]))
+				all_columns = np.zeros((xy_grid.shape[0], num_input_model))
 				all_columns[:, best_features] = xy_grid
-				all_columns[:, np.delete(np.arange(input_data.shape[1]), best_features)] = predictions_other_columns
+				all_columns[:, np.delete(np.arange(num_input_model), best_features)] = predictions_other_columns
 				gauss_pred = models[index_observation_represent].likelihood(models[index_observation_represent](
 					torch.from_numpy(all_columns.astype(np.float64))))
 				z_grid_1d_mean = gauss_pred.mean.numpy()
@@ -172,14 +185,17 @@ def save_plot_model_3d_process(input_data, output_data, parameters, constraints,
 				axes[subplot_idx].set_zlabel('Variation state ' + str(index_observation_represent), fontsize=fontsize,
 					rotation=60)
 				if output_data is not None:
-					axes[subplot_idx].scatter(input_data[indexes_points_in_gp_memory, best_features[0]],
-						input_data[indexes_points_in_gp_memory, best_features[1]],
-						output_data[indexes_points_in_gp_memory, index_observation_represent], marker='x', c='g')
+					axes[subplot_idx].scatter(
+					input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[0]],
+					input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[1]],
+					output_data[indexes_points_in_gp_memory[index_observation_represent], index_observation_represent],
+					marker='x', c='g')
 
-					axes[subplot_idx].scatter(input_data[indexes_points_outside_gp_memory, best_features[0]],
-						input_data[indexes_points_outside_gp_memory, best_features[1]],
-						output_data[indexes_points_outside_gp_memory, index_observation_represent],
-						marker='x', c='k')
+					axes[subplot_idx].scatter(
+					input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[0]],
+					input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[1]],
+					output_data[indexes_points_outside_gp_memory[index_observation_represent], index_observation_represent],
+					marker='x', c='k')
 
 					axes[subplot_idx].quiver(input_data[:-1, best_features[0]], input_data[:-1, best_features[1]],
 						output_data[:-1, index_observation_represent],
@@ -196,18 +212,19 @@ def save_plot_model_3d_process(input_data, output_data, parameters, constraints,
 
 				if output_data is not None:
 					predictions_data_outside_memory = models[index_observation_represent].likelihood(
-						models[index_observation_represent](input_data[indexes_points_outside_gp_memory]))
+						models[index_observation_represent](
+							input_data[indexes_points_outside_gp_memory[index_observation_represent]]))
 					errors_outside_memory = np.abs(predictions_data_outside_memory.mean.numpy() -
-												   output_data[indexes_points_outside_gp_memory, index_observation_represent])
+						output_data[indexes_points_outside_gp_memory[index_observation_represent], index_observation_represent])
 					errors = np.zeros_like(input_data[:, 0])
-					errors[indexes_points_outside_gp_memory] = errors_outside_memory
+					errors[indexes_points_outside_gp_memory[index_observation_represent]] = errors_outside_memory
 					axes[subplot_idx + columns_active].scatter(
-						input_data[indexes_points_in_gp_memory, best_features[0]],
-						input_data[indexes_points_in_gp_memory, best_features[1]],
-						errors[indexes_points_in_gp_memory], marker='x', c='g')
+						input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[0]],
+						input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[1]],
+						errors[indexes_points_in_gp_memory[index_observation_represent]], marker='x', c='g')
 					axes[subplot_idx + columns_active].scatter(
-						input_data[indexes_points_outside_gp_memory, best_features[0]],
-						input_data[indexes_points_outside_gp_memory, best_features[1]],
+						input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[0]],
+						input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[1]],
 						errors_outside_memory, marker='x', c='k')
 					axes[subplot_idx + columns_active].quiver(
 						input_data[:-1, best_features[0]], input_data[:-1, best_features[1]],
@@ -224,3 +241,29 @@ def save_plot_model_3d_process(input_data, output_data, parameters, constraints,
 			fig.savefig(os.path.join(folder_save, 'model_3d' + '_h' + str(hour) + '_m' + str(minute)
 															  + '_s' + str(second) + '.png'))
 			plt.close()
+
+
+def create_models(train_inputs, train_targets, parameters, constraints):
+	num_models = len(train_targets[0])
+	models = [ExactGPModelMonoTask(train_inputs, train_targets[:, idx_model], len(train_inputs[0]))
+		for idx_model in range(num_models)]
+
+	for idx_model in range(num_models):
+		# register constraints on parameters
+		if "min_std_noise" in constraints.keys():
+			models[idx_model].likelihood.noise_covar.register_constraint("raw_noise",
+				gpytorch.constraints.Interval(lower_bound=np.power(constraints['min_std_noise'], 2),
+					upper_bound=np.power(constraints['max_std_noise'], 2)))
+		if "min_outputscale" in constraints.keys():
+			models[idx_model].covar_module.register_constraint("raw_outputscale",
+				gpytorch.constraints.Interval(
+					lower_bound=constraints['min_outputscale'],
+					upper_bound=constraints['max_outputscale']))
+		if "min_lengthscale" in constraints.keys():
+			models[idx_model].covar_module.base_kernel.register_constraint("raw_lengthscale",
+				gpytorch.constraints.Interval(
+					lower_bound=constraints['min_lengthscale'],
+					upper_bound=constraints['max_lengthscale']))
+		# load parameters
+		models[idx_model].load_state_dict(parameters[idx_model])
+	return models
