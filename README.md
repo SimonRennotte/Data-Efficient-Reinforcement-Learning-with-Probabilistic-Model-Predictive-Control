@@ -1,7 +1,7 @@
 # Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/gif_total.gif?)
 
-Example of control agents learning from scratch
+Control agents learning from scratch
 ## Overview
 Unofficial implementation of the paper [Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control](https://arxiv.org/pdf/1706.06491v1.pdf) with pytorch and gpytorch.
 
@@ -20,25 +20,23 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ---
 
 ## Table of contents
-  * [Experiments](##Experiments)
-    * [Pendulum-v0](###Pendulum-v0)
-    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
-  * [Implementation differences from the paper](##Differences)
-  * [Limitations](##Limitations)
-  * [Installation](##Installation)
-  * [How to run](##Run)
-  * [TODO](##TODO)
-  * [Ressources](##Ressources)
-    * [Summary](###Summary)
-    * [Talks/Tutorials](###Talks/Tutorials)
-    * [Papers](###Papers)
-    * [Textbooks](###Textbooks)
-    * [Projects](###Projects)
+  **[Experiments](##Experiments)**<br>
+    **[Pendulum-v0](###Pendulum-v0)**<br>
+    **[MountainCarContinuous-v0](###MountainCarContinuous-v0)**<br>
+  **[Implementation differences from the paper](##Differences)**<br>
+  **[Limitations](##Limitations)**<br>
+  **[Installation](##Installation)**<br>
+  **[How to run](##Run)**<br>
+  **[TODO](##TODO)**<br>
+  **[Ressources](##Ressources)**<br>
+    **[Summary](###Summary)**<br>
+    **[Talks/Tutorials](###Talks/Tutorials)**<br>
+    **[Papers](###Papers)**<br>
+    **[Textbooks](###Textbooks)**<br>
+    **[Projects](###Projects)**<br>
     
 ## Experiments
 For each experiment, two plots allow to see the learning progress:
-
-
 
 - A time graph that shows how the control variables evolve.
    - The top graph: states along with the predicted states and uncertainty from n time steps prior. The value of n is specified in the legend. 
@@ -114,10 +112,13 @@ And activate it with:
 
 Depending on your platform, you may have to modify the yml file to install pytorch following the instructions [here](https://pytorch.org/get-started/locally/)
 ## Run
-To use the script, two json files are necessary.
-The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, and the parameters relative to visualizations.
 
-For each gym environment, a json file containing the gym environment name contains all the parameters relative to this environement, and the control used.
+Once your virtual environment is activated, write: python main.py
+
+All parameters are stored in two two json files.
+- The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, the parameters relative to visualizations, and the loss over multiple runs must be computed.
+
+- For each gym environment, a json file containing the gym environment name contains all the parameters relative to this environement, and the control used.
 The syntax is parameters_"gym_env_name".json
 
 To use the model on a different gym environement, an other json file must be created, which contains the same structure and parameters, but with different values.
@@ -172,8 +173,7 @@ folder_save => environment name => time and date of the run
 ## TODO
 This github is under active development. If you detect any bugs or potential improvements, please let me know.
 The following features are still to be developed :
-- A faster optimizer
-- Constraints on the lower and upper limit of states
+- Using a multiple shooting method for optimization for faster optimization, and (?) better constraints, from https://hal.inria.fr/inria-00390435/file/Diehl.pdf
 - Dynamic representation of the model and the predicted trajectory in graphs updated in real time
 - Gym environment with discrete states and actions
 
