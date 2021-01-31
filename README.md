@@ -92,8 +92,7 @@ Compared to the implementation in the document, the scripts have been designed t
 - The optimized function in the mpc is the lower confidence bound of the expected long-term cost to reward exploration and avoid getting stuck in a local minimum.
 - The environment is not reset, learning is done in one go. Thus, the hyper-parameters training can not be done between trials. The learning of the hyperparameters and the storage of the visualizations are performed in a parallel process at regular time intervals in order to minimize the computation time at each control iteration.
 - An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
-- Constrainsts on states are not available yet
-- The optimizer for actions is LBFGS directly applied on the actions. The particular structure of the problem is not used to speed the computation times, which is why the time between iterations is high. The animations displayed do not show the computation times between each iteration. 
+- The optimizer for actions is LBFGS directly applied on the actions. The particular structure of the problem is not used to speed the computation times. The animations displayed do not show the computation times between each iteration. 
 
 An option has been added to repeat the predicted actions, so that a longer time horizon can be used with the MPC, which is crucial for certain environments such as the mountain car. 
 
@@ -102,7 +101,7 @@ An option has been added to repeat the predicted actions, so that a longer time 
 - The cost function must be clearly defined as a squared distance function of the states/observations
 - The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can also be a problem when the dimensionality of the action space is too high. To have lower computation time, you can reduce the horizon, but it will decrease the performances.
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately). 
-- If too much points are stored in the memory of the gaussian process, the computation times might become very high. The computation times scale in n³.
+- If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
 - The current implementation will not work for gym environments with discrete states
 
 ## Installation
@@ -161,6 +160,13 @@ folder_save => environment name => time and date of the run
     - limit_derivative_actions: if set to 1, the variation of the normalized actions will be limited, from timestep to timestep by the parameter max_derivative_actions_norm (dim=scalar)
     - max_derivative_actions_norm: limitation on the variation of normalized actions if limit_derivative_actions is set to 1. (dim=scalar)
     - clip_lower_bound_cost_to_0: if set to 1, the optimized cost (with exploration parameter) will be clipped to 0 if negative. This allows to stop exploration when the optimum is reached
+    - compute_factorization_each_iteration: If set to 0, the factorization of the gaussian processes will only computed when the hyper parameters of the gaussian processes are trained, which means that new points in the gps memory will not be used until the end of the next training process. This reduce iteration times if there are many points in the gaussian process memory but reduces performances.
+
+- params_constraints_states: 
+     - use_constraints: if set to 1, the constraints will be used, if set to 0, it will be ignored
+     - states_min: minimum allowed value of the states (dim=(number of states))
+     - states_max: maximum allowed value of the states (dim=(number of states))
+					- area_penalty_multiplier: At the moment, constraints on the states are added as a penalty in the predicted cost trajectory. The value of this penalty is the area of the        predicted state distribution that violate the constraints. This penalty is multiplied by this parameter 
      
 - params_train: parameters used for the training of the gaussian processes hyper parameters, done in a parallel process
     - lr_train learning rate
@@ -171,7 +177,7 @@ folder_save => environment name => time and date of the run
     - step_print_train: if print_train is set to 1, this parameter specifies the frequency of printing during training
      
 - params_init: 
-    - num_random_actions_init: number of 
+    - num_random_actions_init: number of inital random actions (one action is multiple time steps if num_repeat_actions is different than 1)
      
 - params_actions_optimizer: parameters of the optimizer used to find the optimal actions by minimizing the lower bound of the predicted cost. See the scipy documentation: https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html?highlight=minimize Note: the jacobian is used for optimization, so the parameters eps is not used.
      
