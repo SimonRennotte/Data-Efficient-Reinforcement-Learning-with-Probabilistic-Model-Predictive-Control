@@ -50,8 +50,11 @@ For each experiment, two plots allow to see the learning progress:
 
 ### Pendulum-v0
 Mean losses over 10 runs:
+
 ![losses](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Cost_runs_Pendulum-v0.png?)
+
 Example of one run:
+
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_pendulum.gif?)
 
 The following figure shows the time graph for the inverted pendulum that is shown in the animation :
@@ -68,9 +71,13 @@ The gaussian process models along the points in memory are represented in the fo
 ### MountainCarContinuous-v0
 
 The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, the parameter to repeat the actions has been set to 5. For the shown example, 1 control time step correspond to 5 time steps where the action is maintained. If this trick is not used, the control is not possible, or the computation times become too high.
+
 Mean losses over 10 runs:
+
 ![losses](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Cost_runs_MountainCarContinuous-v0.png?)
+
 Example of one run:
+
 ![animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_mountain_car.gif?)
 
 ![histories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_mountain_car.png?raw=True)
