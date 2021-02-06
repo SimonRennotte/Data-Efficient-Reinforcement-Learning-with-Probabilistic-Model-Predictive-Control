@@ -167,6 +167,7 @@ def main():
 
 		control_object.p_save_plot_history.join()
 		control_object.p_save_plot_history.close()
+		plt.close()
 
 	if num_tests > 1:
 		mean_cost_runs = losses_tests.mean(0)
