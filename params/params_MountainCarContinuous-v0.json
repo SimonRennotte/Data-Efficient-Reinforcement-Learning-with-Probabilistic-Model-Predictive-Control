@@ -4,10 +4,12 @@
 		"scale": [5e-2, 5e-2, 5e-2]},
 	"params_constraints_hyperparams": {"min_std_noise": 1e-3, "max_std_noise": 3e-1, "min_outputscale":  1e-3,
 		"max_outputscale": 0.95, "min_lengthscale":  4e-3, "max_lengthscale": 5.0},
-	"params_controller": {"target": [1, 0.0], "weights_target": [1, 0], "weights_target_terminal_cost": [5, 0],
+	"params_controller": {"target_state": [1, 0.0], "weights_target_state": [1, 0],
+							"weights_target_state_terminal_cost": [5, 0],
+							"target_action": [0.5], "weights_target_action": [0.1],
 							"s_observation": [1e-6, 1e-6], "len_horizon": 15, "exploration_factor": 3,
 							"limit_derivative_actions": 0, "max_derivative_actions_norm": 0.25,
-							"num_repeat_actions": 5, "clip_lower_bound_cost_to_0": 1,
+							"num_repeat_actions": 5, "clip_lower_bound_cost_to_0": 0,
 							"compute_factorization_each_iteration": 1},
 	"params_constraints_states": {"use_constraints": 0, "states_min": [0.15, -0.1], "states_max":  [1.1, 1.1],
 									"area_penalty_multiplier": 2},
@@ -18,5 +20,5 @@
 									"maxiter": 3, "iprint": -1, "maxls": 3, "finite_diff_rel_step": null},
 	"params_memory": {"min_error_prediction_states_for_storage":  [5e-4, 5e-4],
 						"min_prediction_states_std_for_storage":  [4e-3, 4e-3]},
-	"num_steps_env": 600
+	"num_steps_env": 400
 }

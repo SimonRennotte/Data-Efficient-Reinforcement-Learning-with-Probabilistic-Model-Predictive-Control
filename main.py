@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 import gym
 import json
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
+import torch
 
 from control_objects.probabilistic_gp_mpc_controller import ProbabiliticGpMpcController
+from control_objects.utils import draw_history, LivePlotClass
 
 
 def main():
@@ -35,10 +37,19 @@ def main():
 	num_repeat_actions = params_controller["num_repeat_actions"]
 	num_tests = params_general['number_tests_to_run']
 
+	target_state = np.array(params_controller['target_state'])
+	weights_target_state = np.diag(params_controller['weights_target_state'])
+	weights_target_state_terminal_cost = np.diag(params_controller['weights_target_state_terminal_cost'])
+	target_action = np.array(params_controller['target_action'])
+	weights_target_action = np.diag(params_controller['weights_target_action'])
+	s_observation = np.diag(params_controller['s_observation'])
+
 	losses_tests = np.ones((num_tests, num_steps // num_repeat_actions - num_random_actions))
 	for test_idx in range(num_tests):
 		env = gym.make(env_to_control)
-
+		if params_general['render_live_plot']:
+			live_plot_obj = LivePlotClass(num_steps,
+				env.observation_space, env.action_space, params_constraints_states, num_repeat_actions)
 		datetime_now = datetime.datetime.now()
 		folder_save = os.path.join('folder_save', env_to_control, 'y' + str(datetime_now.year) \
 																  + '_mon' + str(datetime_now.month) + '_d' + str(
@@ -55,20 +66,13 @@ def main():
 
 		env.reset()
 
-		target = np.array(params_controller['target'])
-		weights_target = np.diag(params_controller['weights_target'])
-		weights_target_terminal_cost = np.diag(params_controller['weights_target_terminal_cost'])
-		s_observation = np.diag(params_controller['s_observation'])
-
 		control_object = ProbabiliticGpMpcController(env.observation_space, env.action_space, params_controller,
-			params_train, params_actions_optimizer, params_constraints_states,
-			hyperparameters_init, target, weights_target, weights_target_terminal_cost, params_constraints_hyperparams,
-			env_to_control,
-			folder_save, num_repeat_actions)
+			params_train, params_actions_optimizer, params_constraints_states, hyperparameters_init,
+			target_state, weights_target_state, weights_target_state_terminal_cost,
+			target_action, weights_target_action,
+			params_constraints_hyperparams, env_to_control, folder_save, num_repeat_actions)
 
-		action = env.action_space.sample()
-		# low + (env.action_space.high - env.action_space.low) * np.random.uniform(0, 1)
-		observation, reward, done, info = env.step(action)
+		observation, reward, done, info = env.step(env.action_space.sample())
 		for idx_random_action in range(num_random_actions):
 			control_object.action = env.action_space.sample()
 			action = env.action_space.sample()
@@ -84,6 +88,8 @@ def main():
 						rec.capture_frame()
 					except:
 						pass
+			if params_general['render_live_plot']:
+				live_plot_obj.add_point_update(observation, action)
 			control_object.add_point_memory(observation, action, new_observation, reward)
 			observation = new_observation
 
@@ -108,9 +114,8 @@ def main():
 			if params_general['verbose']:
 				for key in add_info_dict:
 					print(key + ': ' + str(add_info_dict[key]))
-			observation = new_observation
 
-			if params_general['save_plot_history'] and \
+			if params_general['save_plot'] and \
 					(control_object.num_points_memory % params_general["frequency_iter_save"] == 0):
 				control_object.save_plot_history()
 
@@ -118,13 +123,35 @@ def main():
 					(control_object.num_points_memory % params_general["frequency_iter_save"] == 0):
 				control_object.save_plot_model_3d()
 
-			# TODO: Allow dynamic visualizations
-			if params_general['render_live_plot_model_3d']:
-				pass  # control_object.render_plot_model3d()
+			if params_general['render_live_plot']:
+				live_plot_obj.add_point_update(observation, action, add_info_dict)
+				'''if not 'fig_history' in vars() or not 'axes_history' in vars():
+					fig_history, axes_history = plt.subplots(nrows=3, figsize=(6, 5), sharex=True)
+					axes_history[0].set_title('Normed states and predictions')
+					axes_history[1].set_title('Normed actions')
+					axes_history[2].set_title('Cost and horizon cost')
+					plt.xlabel("time")
+					axes_history[0].set_ylim(0, 1.02)
+					axes_history[1].set_ylim(0, 1.02)
+					axes_history[2].set_xlim(0, num_steps)
+					plt.tight_layout()
+					states = control_object.x[:control_object.num_points_memory, :control_object.num_states].numpy()
+					actions = control_object.x[:control_object.num_points_memory, control_object.num_states:].numpy()
+					states_next = control_object.y[:control_object.num_points_memory].numpy() + states
+					fig_history, axes_history = draw_history(states, actions, states_next,
+						control_object.prediction_info_over_time, num_repeat_actions, control_object.constraints_states,
+						3, fig_history, axes_history, False)
+					plt.show(block=False)
+				else:
+					states = control_object.x[:control_object.num_points_memory, :control_object.num_states].numpy()
+					actions = control_object.x[:control_object.num_points_memory, control_object.num_states:].numpy()
+					states_next = control_object.y[:control_object.num_points_memory].numpy() + states
+					fig_history, axes_history = draw_history(states, actions, states_next,
+						control_object.prediction_info_over_time, num_repeat_actions, control_object.constraints_states,
+						3, fig_history, axes_history, False)
+					fig_history.canvas.draw()'''
 
-			if params_general['render_live_plot_history']:
-				pass  # control_object.render_plot_model3d()
-
+			observation = new_observation
 			print("time loop: " + str(time.time() - time_start) + " s\n")
 		env.__exit__()
 		if params_general['save_render_env']:
@@ -137,6 +164,7 @@ def main():
 		# wait for the processes to be finished
 		control_object.p_save_plot_model_3d.join()
 		control_object.p_save_plot_model_3d.close()
+
 		control_object.p_save_plot_history.join()
 		control_object.p_save_plot_history.close()
 

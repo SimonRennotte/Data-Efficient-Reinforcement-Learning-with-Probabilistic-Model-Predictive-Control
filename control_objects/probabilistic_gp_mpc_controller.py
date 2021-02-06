@@ -17,14 +17,18 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 
 class ProbabiliticGpMpcController(BaseControllerObject):
 	def __init__(self, observation_space, action_space, params_controller, params_train, params_actions_optimizer,
-			params_constraints_states, hyperparameters_init, target_state, weights_matrix_cost_function,
-			weight_matrix_cost_function_terminal, constraints_hyperparams, env_to_control, folder_save,
-			num_repeat_actions):
+			params_constraints_states, hyperparameters_init,
+			target_state, weight_matrix_states_cost_function, weight_matrix_states_cost_function_terminal,
+			target_action, weight_matrix_actions_cost_function,
+			constraints_hyperparams, env_to_control, folder_save, num_repeat_actions):
 		BaseControllerObject.__init__(self, observation_space, action_space)
 		self.models = []
-		self.weight_matrix_cost_function = torch.Tensor(weights_matrix_cost_function)
-		self.weight_matrix_cost_function_terminal = torch.Tensor(weight_matrix_cost_function_terminal)
+		self.weight_matrix_cost_function = \
+			torch.block_diag(torch.Tensor(weight_matrix_states_cost_function), 
+				torch.Tensor(weight_matrix_actions_cost_function))
+		self.weight_matrix_cost_function_terminal = torch.Tensor(weight_matrix_states_cost_function_terminal)
 		self.target_state = torch.Tensor(target_state)
+		self.target_state_action = torch.cat((self.target_state, torch.Tensor(target_action)))
 		for observation_idx in range(observation_space.shape[0]):
 			self.models.append(ExactGPModelMonoTask(None, None, self.num_inputs))
 
@@ -128,15 +132,23 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			self.p_train.start()
 			self.num_cores_main -= 1
 
-	def cost_fct_on_uncertain_inputs(self, m_state, s_state, m_action, s_action):
+	def cost_fct_on_uncertain_inputs(self, m_state, s_state, m_action):
 		'''This function computes the quadratic cost of a state distribution given the weight matrix, and target state.
 		m_state and s_state can be either the full trajectory (m_state.ndim=2 and s_state.ndim=3),
 		or a single state (m_state.ndim=1 and s_state.ndim=2)'''
-		error = m_state - self.target_state
-		mean_cost = torch.diagonal(torch.matmul(s_state, self.weight_matrix_cost_function), dim1=-1, dim2=-2).sum(-1) + \
-					torch.matmul(torch.matmul(error[..., None].transpose(-1, -2), self.weight_matrix_cost_function),
+		if s_state.ndim == 3:
+			error = torch.cat((m_state, m_action), 1) - self.target_state_action
+			s_state_action = torch.cat((
+				torch.cat((s_state, torch.zeros((s_state.shape[0], s_state.shape[1], m_action.shape[1]))), 2),
+				torch.zeros((s_state.shape[0], m_action.shape[1], s_state.shape[1] + m_action.shape[1]))), 1)
+		else:
+			error = torch.cat((m_state, m_action), 0) - self.target_state_action
+			s_state_action = torch.block_diag(s_state, torch.zeros((m_action.shape[0], m_action.shape[0])))
+		expected_cost = torch.diagonal(torch.matmul(s_state_action, self.weight_matrix_cost_function),
+				dim1=-1, dim2=-2).sum(-1) + \
+				torch.matmul(torch.matmul(error[..., None].transpose(-1, -2), self.weight_matrix_cost_function),
 						error[..., None]).squeeze()
-		TS = self.weight_matrix_cost_function @ s_state
+		TS = self.weight_matrix_cost_function @ s_state_action
 		s_cost_term_1 = torch.diagonal(2 * TS @ TS, dim1=-1, dim2=-2).sum(-1)
 		s_cost_term_2 = TS @ self.weight_matrix_cost_function
 		s_cost_term_3 = (4 * error[..., None].transpose(-1, -2) @ s_cost_term_2 @ error[..., None]).squeeze()
@@ -160,9 +172,9 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 				constraint_penalty_max = ((1 - distribution_state.cdf(
 					torch.Tensor(self.constraints_states["states_max"]))) * \
 									  self.constraints_states['area_penalty_multiplier']).diagonal(0, -1, -2).sum(-1)
-			mean_cost = mean_cost + constraint_penalty_max + constraint_penalty_min
+			expected_cost = expected_cost + constraint_penalty_max + constraint_penalty_min
 
-		return mean_cost, s_cost
+		return expected_cost, s_cost
 
 	def terminal_cost(self, m_state, s_state):
 		error = m_state - self.target_state
@@ -194,10 +206,10 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			mu_states_pred[idx_time] = mu_states_pred[idx_time - 1] + d_state  # torch.clamp(, 0, 1)
 			s_states_pred[idx_time] = d_s_state + s_states_pred[idx_time - 1] + \
 									  s_inputs_pred[:s_states_pred.shape[1]] @ v + \
-									  v.t() @ s_inputs_pred[:, :s_states_pred.shape[1]]
+									  v.t() @ s_inputs_pred[:s_states_pred.shape[1]].t()
 
 		costs_trajectory, costs_trajectory_variance = self.cost_fct_on_uncertain_inputs(mu_states_pred[:-1],
-			s_states_pred[:-1], actions, torch.zeros_like(actions))
+			s_states_pred[:-1], actions)
 		cost_trajectory_final, costs_trajectory_variance_final = self.terminal_cost(mu_states_pred[-1],
 			s_states_pred[-1])
 		costs_trajectory = torch.cat((costs_trajectory, cost_trajectory_final[None]), 0)
@@ -219,19 +231,22 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			self.predict_trajectory(actions_input, mu_observation, s_observation, iK, beta)
 		if self.clip_lower_bound_cost_to_0:
 			costs_trajectory_lcb = torch.clamp(costs_trajectory_lcb, 0, np.inf)
-		cost_trajectory = costs_trajectory_lcb.mean()
-		gradients_cost = torch.autograd.grad(cost_trajectory, actions, retain_graph=False)[0]
+		mean_cost_trajectory_lcb = costs_trajectory_lcb.mean()
+		gradients_cost = torch.autograd.grad(mean_cost_trajectory_lcb, actions, retain_graph=False)[0]
 
-		self.cost_trajectory_mean_lcb = cost_trajectory.detach()
+		self.cost_trajectory_mean_lcb = mean_cost_trajectory_lcb.detach()
 		self.mu_states_pred = mu_states_pred.detach()
 		self.costs_trajectory = costs_trajectory.detach()
 		self.s_states_pred = s_states_pred.detach()
 		self.costs_trajectory_variance = costs_trajectory_variance.detach()
 
-		return cost_trajectory.detach().numpy(), gradients_cost[:, 0].detach().numpy()
+		return mean_cost_trajectory_lcb.detach().numpy(), gradients_cost[:, 0].detach().numpy()
 
 	@staticmethod
 	def calculate_factorizations(x, y, models):
+		""" Function inspired from
+		https://github.com/nrontsis/PILCO/blob/6a962c8e4172f9e7f29ed6e373c4be2dd4b69cb7/pilco/models/mgpr.py#L81,
+		reimplemented from tensorflow to pytorch """
 		K = torch.stack([model.covar_module(x).evaluate() for model in models])
 		batched_eye = torch.eye(K.shape[1]).repeat(K.shape[0], 1, 1)
 		L = torch.cholesky(K + torch.stack([model.likelihood.noise for model in models])[:, None] * batched_eye)
@@ -241,6 +256,14 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		return iK, beta
 
 	def predict_given_factorizations(self, m, s, iK, beta):
+		"""
+		 Approximate GP regression at noisy inputs via moment matching
+		 IN: mean (m) (row vector) and (s) variance of the state
+		 OUT: mean (M) (row vector), variance (S) of the action and inv(s)*input-ouputcovariance
+		Function inspired from
+		https://github.com/nrontsis/PILCO/blob/6a962c8e4172f9e7f29ed6e373c4be2dd4b69cb7/pilco/models/mgpr.py#L81,
+		reinterpreted from tensorflow to pytorch
+		 """
 		s = s[None, None, :, :].repeat([self.num_states, self.num_states, 1, 1])
 		inp = (self.x[self.indexes_memory_gp[:beta.shape[1]]] - m)[None, :, :].repeat([self.num_states, 1, 1])
 		lengthscales = torch.stack([model.covar_module.base_kernel.lengthscale[0] for model in self.models])
@@ -346,7 +369,7 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 			self.action_previous_iter = next_action
 			actions = torch.Tensor(actions)
 			cost, cost_var = self.cost_fct_on_uncertain_inputs(normed_mu_observation, normed_s_observation,
-				actions[0], 0)
+				actions[0])
 			denorm_act = next_action[0] * (self.action_space.high - self.action_space.low) + self.action_space.low
 			# denorm_states = self.mu_states_pred[1:] * \
 			# (self.observation_space.high - self.observation_space.low) + self.observation_space.low
@@ -358,9 +381,11 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 				'predicted states std': std_states[1:],
 				'predicted actions': actions,
 				'cost': cost.item(), 'cost std': cost_var.sqrt().item(),
-				'mean cost trajectory': self.costs_trajectory.mean().item(),
-				'mean cost trajectory std': self.costs_trajectory_variance.sqrt().mean().item(),
-				'lower bound cost trajectory': self.cost_trajectory_mean_lcb.item()}
+				'predicted costs': self.costs_trajectory[1:],
+				'predicted costs std': self.costs_trajectory_variance[1:].sqrt(),
+				'mean predicted cost': np.min([self.costs_trajectory[1:].mean().item(), 3]),
+				'mean predicted cost std': self.costs_trajectory_variance[1:].sqrt().mean().item(),
+				'lower bound mean predicted cost': self.cost_trajectory_mean_lcb.item()}
 			for key in add_info_dict.keys():
 				if not key in self.prediction_info_over_time:
 					self.prediction_info_over_time[key] = [add_info_dict[key]]
