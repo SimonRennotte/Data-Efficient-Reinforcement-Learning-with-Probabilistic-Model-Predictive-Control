@@ -137,7 +137,7 @@ Depending on your platform, you may have to modify the yml file to install pytor
 Once your virtual environment is activated, write: python main.py
 
 All parameters are stored in two two json files.
-- The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, the parameters relative to visualizations, and the loss over multiple runs must be computed.
+- The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, the parameters relative to visualizations. The parameter number_tests_to_run specifies the number of runs to perform to compute the mean losses. If it is set to 1, the mean losses will not be computed.
 
 - For each gym environment, a json file containing the gym environment name contains all the parameters relative to this environement, and the control used.
 The syntax is parameters_"gym_env_name".json
