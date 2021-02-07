@@ -56,7 +56,7 @@ The following figure shows the mean cost over 10 runs:
 ![losses](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Cost_runs_Pendulum-v0.png?)
 
 We can see that the model allows to control the environment in less than hundred interactions with the environment from scratch.
-As a comparison, the state of the art of model free reinforcement learning algorithms that I found in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment.
+As a comparison, the state of the art of model free reinforcement learning algorithms in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment.
 
 The following figures and animation shows an example of control.
 
@@ -105,8 +105,8 @@ An option has been added to repeat the predicted actions, so that a longer time 
 - The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can also be a problem when the dimensionality of the action space is too high. To have lower computation time, you can reduce the horizon, but it will decrease the performances.
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions. 
 - If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
-- The current implementation will not work for gym environments with discrete states.
-- At the moment the current implementation do not allow controls where real time constrainsts are needed, no guarentee are given for the time per iteration.
+- The current implementation will not work for gym environments with discrete states or actions.
+- At the moment the current implementation do not allow controls where real time control is required, no guarentee are given for the time per iteration.
 
 ## Installation
 ### Dependencies
@@ -155,7 +155,7 @@ folder_save => environment name => time and date of the run
     - max_lengthscale: maximum value of the lengthscales (dim=scalar)
      
 - params_controller: parameters relative to the cost function and MPC
-    - target)state: The value of the states to attain to minimize the cost (dim=(dimension of states))
+    - target_state: The value of the states to attain to minimize the cost (dim=(dimension of states))
     - weights_target_state: Weigths of each state dimension in the cost function (dim=(dimension of states))
     - weights_target_state_terminal_cost: Weigths of each state dimension in the terminal cost function, at the end of the prediction horizon (dim=(dimension of states))
     - target_action: The value of the actions to attain to minimize the cost (dim=(dimension of actions))
@@ -246,5 +246,5 @@ https://github.com/nrontsis/PILCO
 ## Contact me
 You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
 
-I plan to do my PHD in UMontreal or UCL in the fall of 2021 or the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
+I plan to do my PHD in UMontreal or UCL in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
 If you know someone there or work there yourself, I would like to chat to have more informations. Thank you ! 
