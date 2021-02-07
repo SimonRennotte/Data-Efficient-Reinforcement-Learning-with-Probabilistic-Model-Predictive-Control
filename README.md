@@ -206,12 +206,12 @@ This github is under active development. If you detect any bugs or potential imp
 The following features are still to be developed :
 - Using a multiple shooting method for optimization for faster optimization, and (?) better constraints, from https://hal.inria.fr/inria-00390435/file/Diehl.pdf
 - Updating the dynamic graph in a parallel process
-- Providing guarentee on the maximum time per iteration
+- Providing guarantee on the maximum time per iteration
 - Gym environment with discrete states and actions
 
 ## Ressources
 
-### Summary
+### Brief explanation of the method
 The approach uses a model to control the environment. This family of methods are called Model Predictive Control (MPC). At each interaction with the real environment, the optimal action is obtained through an iterative approach. The model is used to evaluate certain actions over a fixed time horizon in a simulation of the environment with the learned model. This simulation is used several times at each interaction with the real world to find the optimal actions in the time horizon window with a optimizer. The first control of the time horizon is then used for the next action in the real world. In traditional control theory, the model is a mathematical model obtained from theory. Here, the model is a Gaussian process that learns from observed data. 
 
 Gaussian processes are used to predict the variation of states as a function of states and input actions. The predictions have the form of a distribution, which also allows the uncertainty of these predictions. Gaussian processes are defined by a mean and covariance function, and store previous points (states(t), actions(t), (states(t+1) - states(t))) in memory. To compute the new predictions, the covariance between the new points and the points stored in memory is calculated, which allows, with a little mathematics, to obtain the predicted distribution. Conceptually, Gaussian processes can be seen as if they were looking at adjacent points in memory to compute predictions at new points. Depending on the distance between the new point and the points stored in memory, the uncertainty will be greater or smaller. In our case, 
