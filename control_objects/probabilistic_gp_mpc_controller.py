@@ -45,7 +45,7 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		self.constraints_states = params_constraints_states if params_constraints_states["use_constraints"] else None
 		self.params_actions_optimizer = params_actions_optimizer
 		self.limit_derivative_actions = params_controller['limit_derivative_actions']
-		self.max_derivative_action_norm = params_controller['max_derivative_actions_norm']
+		self.max_derivative_action_norm = np.array(params_controller['max_derivative_actions_norm'])
 		self.clip_lower_bound_cost_to_0 = params_controller['clip_lower_bound_cost_to_0']
 		self.folder_save = folder_save
 		self.env_to_control = env_to_control
@@ -55,12 +55,12 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 		self.indexes_memory_gp = []
 
 		if self.limit_derivative_actions:
-			min_d_actions = -self.max_derivative_action_norm
-			max_d_actions = self.max_derivative_action_norm
-			self.bounds = [(min_d_actions, max_d_actions)] * self.action_space.shape[0] * self.len_horizon
-
-			self.predicted_actions_previous_iter = np.random.uniform(low=min_d_actions, high=max_d_actions,
-				size=(self.len_horizon, action_space.shape[0]))
+			self.bounds = \
+				[(-self.max_derivative_action_norm[idx_action], self.max_derivative_action_norm[idx_action]) \
+					for idx_action in range(self.action_space.shape[0])] * self.len_horizon
+			self.predicted_actions_previous_iter = \
+				np.dot(np.expand_dims(np.random.uniform(low=-1, high=1, size=(self.len_horizon)), 1),
+					np.expand_dims(self.max_derivative_action_norm, 0))
 		else:
 			self.bounds = [(0, 1)] * self.num_actions * self.len_horizon
 			self.predicted_actions_previous_iter = np.random.uniform(low=0, high=1,
