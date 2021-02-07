@@ -70,6 +70,10 @@ The gaussian process models along the points in memory are represented in the fo
 
 ![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true)
 
+The following animation shows the dynamic graph updated in real time (for another run).
+
+![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?)
+
 ### MountainCarContinuous-v0
 
 The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, the parameter to repeat the actions has been set to 3. For the shown example, 1 control time step correspond to 3 time steps where the action is maintained. If this trick is not used, the control is not possible, or the computation times become too high.
@@ -88,6 +92,9 @@ The following figures and animation shows an example of control.
 
 ![3d_models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_mountain_car.png?raw=True)
 
+The following animation shows the dynamic graph updated in real time (for another run).
+
+![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?)
 
 ## Implementation differences from the paper
 
