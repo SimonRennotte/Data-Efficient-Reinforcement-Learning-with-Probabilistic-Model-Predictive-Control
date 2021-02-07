@@ -36,7 +36,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
     * [Projects](###Projects)
     
 ## Experiments
-For each experiment, two plots allow to see the learning progress:
+For each experiment, two plots that allow to see the learning progress are saved in the folder "folder_save":
 
 - A time graph that shows how the control variables evolve.
    - The top graph: states along with the predicted states and uncertainty from n time steps prior. The value of n is specified in the legend. 
@@ -44,25 +44,27 @@ For each experiment, two plots allow to see the learning progress:
    - The bottom graph: The actual cost, predicted trajectory cost (mean of future predicted cost) and its uncertainty. Note that the uncertainty of the trajectory cost can be        used to identify times where the future is uncertain for the model.
 
 - 3d visualizations that shows the Gaussian processes model and points in memory. 
-     In this plot, each of the graphs on the top line represents the variation of states for the next step as a function of the current states and actions. The indices represented in the xy axis name represent either states or actions. For example, the input with index 3 represent the action for the pendulum. Action indices are defined as higher than the state indices.
-     The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the gaussian process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs on the bottom line represent the predicted uncertainty, and the points are the prediction errors.
+     In this plot, each of the graphs of the top line represents the variation of states for the next step as a function of the current states and actions. The indices represented in the xy axis name represent either states or actions. For example, the input with index 3 represent the action for the pendulum. Action indices are defined as higher than the state indices.
+     The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the gaussian process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs of the bottom line represent the predicted uncertainty, and the points are the prediction errors.
      The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
+     
+During the control, a dynamic graph similar to the time graph allows to see the evolution of the states, action and costs, but also shows the predicted states, actions and costs computed by the model for the MPC.
 
 ### Pendulum-v0
-Mean losses over 10 runs:
+The following figure shows the mean cost over 10 runs:
 
 ![losses](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Cost_runs_Pendulum-v0.png?)
 
-Example of one run:
+We can see that the model allows to control the environment in less than hundred interactions with the environment from scratch.
+As a comparison, the state of the art of model free reinforcement learning algorithms that I found in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment.
+
+The following figures and animation shows an example of control.
 
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_pendulum.gif?)
 
 The following figure shows the time graph for the inverted pendulum that is shown in the animation :
 
-![stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_pendulum.png?raw=true)
-
-We can see that the model allows to control the environment in about a hundred interactions with the environment from scratch.
-As a comparison, the state of the art of model free reinforcement learning algorithms that I found in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment. 
+![stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_pendulum.png?raw=true) 
 
 The gaussian process models along the points in memory are represented in the following figure.
 
@@ -70,13 +72,15 @@ The gaussian process models along the points in memory are represented in the fo
 
 ### MountainCarContinuous-v0
 
-The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, the parameter to repeat the actions has been set to 5. For the shown example, 1 control time step correspond to 5 time steps where the action is maintained. If this trick is not used, the control is not possible, or the computation times become too high.
+The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, the parameter to repeat the actions has been set to 3. For the shown example, 1 control time step correspond to 3 time steps where the action is maintained. If this trick is not used, the control is not possible, or the computation times become too high.
 
-Mean losses over 10 runs:
+The mean costs over 10 runs can be seen in the following figure:
 
 ![losses](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Cost_runs_MountainCarContinuous-v0.png?)
 
-Example of one run:
+As for the pendulum, the optimal control is obtained in very few steps compared to the state of the art of model-free reinforcement agents
+
+The following figures and animation shows an example of control.
 
 ![animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_mountain_car.gif?)
 
@@ -84,7 +88,6 @@ Example of one run:
 
 ![3d_models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_mountain_car.png?raw=True)
 
-As for the pendulum, the optimal control is obtained in very few steps compared to the state of the art of model-free reinforcement agents
 
 ## Implementation differences from the paper
 
@@ -98,11 +101,12 @@ An option has been added to repeat the predicted actions, so that a longer time 
 
 ## Limitations
 
-- The cost function must be clearly defined as a squared distance function of the states/observations
+- The cost function must be clearly defined as a squared distance function of the states and actions from a reference point.
 - The number of time step of the mpc will greatly impact computation times. In case that a environment need the model to plan too much ahead, the computations time might become too much to solve it in real time. This can also be a problem when the dimensionality of the action space is too high. To have lower computation time, you can reduce the horizon, but it will decrease the performances.
-- The dimension of the input and output of the gaussian process must stay low (below 20 approximately). 
+- The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions. 
 - If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
-- The current implementation will not work for gym environments with discrete states
+- The current implementation will not work for gym environments with discrete states.
+- At the moment the current implementation do not allow controls where real time constrainsts are needed, no guarentee are given for the time per iteration.
 
 ## Installation
 ### Dependencies
@@ -135,6 +139,7 @@ To use the model on a different gym environement, an other json file must be cre
 
 The plots and animations will be saved in the folder "folder_save", with the following structure:
 folder_save => environment name => time and date of the run
+
 ### Json parameters to be specified for each gym environment
 - hyperparameters_init: initial values of the hyperparameters of the gaussian processes
     - noise_std: vector representing the standard deviation of the uncertainty of predictions of the gaussian processes at known points (dim=(number of states))
@@ -150,17 +155,19 @@ folder_save => environment name => time and date of the run
     - max_lengthscale: maximum value of the lengthscales (dim=scalar)
      
 - params_controller: parameters relative to the cost function and MPC
-    - target: The value of the states to attain to have a cost of 0 (dim=(number of states))
-    - weights_target: Weigths of each state in the cost function (dim=(number of states))
-    - weights_target_terminal_cost: Weigths of each state in the terminal cost function, at the end of the prediction horizon (dim=(number of states))
-    - s_observation: variance of the observations of states, if there is observation noise (dim=(number of states))
+    - target)state: The value of the states to attain to minimize the cost (dim=(dimension of states))
+    - weights_target_state: Weigths of each state dimension in the cost function (dim=(dimension of states))
+    - weights_target_state_terminal_cost: Weigths of each state dimension in the terminal cost function, at the end of the prediction horizon (dim=(dimension of states))
+    - target_action: The value of the actions to attain to minimize the cost (dim=(dimension of actions))
+    = weights_target_action: Weigths of each action dimension in the cost function (dim=(dimension of actions))
+    - s_observation: variance of the observations of states, if there is observation noise (dim=(dimension of states))
     - len_horizon: length of the horizon used to find the optinal actions. The total horizon length in timesteps = len_horizon * num_repeat_actions (dim=scalar)
     - num_repeat_actions: number of timesteps to repeat the planned actions
     - exploration_factor: The value to be minimized is the sum of predicted cost - exploration_factor * sum of the predicted cost uncertainty. A higher value will lead to more exploration (dim=scalar) 
     - limit_derivative_actions: if set to 1, the variation of the normalized actions will be limited, from timestep to timestep by the parameter max_derivative_actions_norm (dim=scalar)
-    - max_derivative_actions_norm: limitation on the variation of normalized actions if limit_derivative_actions is set to 1. (dim=scalar)
-    - clip_lower_bound_cost_to_0: if set to 1, the optimized cost (with exploration parameter) will be clipped to 0 if negative. This allows to stop exploration when the optimum is reached
-    - compute_factorization_each_iteration: If set to 0, the factorization of the gaussian processes will only computed when the hyper parameters of the gaussian processes are trained, which means that new points in the gps memory will not be used until the end of the next training process. This reduce iteration times if there are many points in the gaussian process memory but reduces performances.
+    - max_derivative_actions_norm: limitation on the variation of normalized actions from on control step to another if limit_derivative_actions is set to 1. (dim=(dimension of actions))
+    - clip_lower_bound_cost_to_0: if set to 1, the optimized cost (with exploration parameter) will be clipped to 0 if negative.
+    - compute_factorization_each_iteration: If set to 0, the factorization of the gaussian processes will only computed after each time the hyper parameters of the gaussian processes are trained, which means that new points in the gps memory will not be used until the end of the next training process. This reduce iteration times if there are many points in the gaussian process memory but reduces performances.
 
 - params_constraints_states: 
      - use_constraints: if set to 1, the constraints will be used, if set to 0, it will be ignored
@@ -191,7 +198,8 @@ folder_save => environment name => time and date of the run
 This github is under active development. If you detect any bugs or potential improvements, please let me know.
 The following features are still to be developed :
 - Using a multiple shooting method for optimization for faster optimization, and (?) better constraints, from https://hal.inria.fr/inria-00390435/file/Diehl.pdf
-- Dynamic representation of the model and the predicted trajectory in graphs updated in real time
+- Updating the dynamic graph in a parallel process
+- Providing guarentee on the maximum time per iteration
 - Gym environment with discrete states and actions
 
 ## Ressources
@@ -215,7 +223,7 @@ Finally, an interesting feature of using this model based reinforcement learning
 
 Gaussian processes: https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
 
-Presentation of PILCO (method similar to the one used here), by one of the coauthors: https://www.youtube.com/watch?v=AVdx2hbcsfI
+Presentation of PILCO by Marc Deisenroth: https://www.youtube.com/watch?v=AVdx2hbcsfI (method that uses the same gaussian process model, but without an MPC controller)
 
 Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
@@ -223,7 +231,7 @@ Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
 Original paper: https://deepai.org/publication/data-efficient-reinforcement-learning-with-probabilistic-model-predictive-control
 
-PILCO paper: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
+PILCO paper that describes the moment matching approximation: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
 
 Marc deisenroth thesis: https://deisenroth.cc/pdf/thesis.pdf
 
