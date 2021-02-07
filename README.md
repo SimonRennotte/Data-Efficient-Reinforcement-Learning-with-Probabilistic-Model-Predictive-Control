@@ -70,7 +70,7 @@ The gaussian process models along the points in memory are represented in the fo
 
 ![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true)
 
-The following animation shows the dynamic graph updated in real time (for another run).
+The following animation shows the dynamic graph updated in real time (for another run). The predicted future states, actions and loss are represented with dashed lines, along with their confidence interval (2 standard deviation).
 
 ![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?)
 
@@ -92,7 +92,7 @@ The following figures and animation shows an example of control.
 
 ![3d_models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_mountain_car.png?raw=True)
 
-The following animation shows the dynamic graph updated in real time (for another run).
+The following animation shows the dynamic graph updated in real time (for another run). The predicted future states, actions and loss are represented with dashed lines, along with their confidence interval (2 standard deviation).
 
 ![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?)
 
