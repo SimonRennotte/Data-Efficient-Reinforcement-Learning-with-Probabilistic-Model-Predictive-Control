@@ -66,7 +66,7 @@ The following figure shows the time graph for the inverted pendulum that is show
 
 ![stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_pendulum.png?raw=true) 
 
-The gaussian process models along the points in memory are represented in the following figure.
+The gaussian process models and the points in memory are represented in the following figure.
 
 ![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true)
 
