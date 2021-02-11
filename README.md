@@ -21,19 +21,19 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 
 ## Table of contents
   * [Experiments](#experiments)
-    * [Pendulum-v0](###Pendulum-v0)
-    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
-  * [Implementation differences from the paper](##Differences)
-  * [Limitations](##Limitations)
-  * [Installation](##Installation)
-  * [How to run](##Run)
-  * [TODO](##TODO)
-  * [Ressources](##Ressources)
-    * [Summary](###Summary)
-    * [Talks/Tutorials](###Talks/Tutorials)
-    * [Papers](###Papers)
-    * [Textbooks](###Textbooks)
-    * [Projects](###Projects)
+    * [Pendulum-v0](#pendulum-v0)
+    * [MountainCarContinuous-v0](#mountaincarcontinuous-v0)
+  * [Implementation differences from the paper](#implementation-differences)
+  * [Limitations](#limitations)
+  * [Installation](#installation)
+  * [How to run](#run)
+  * [TODO](#todo)
+  * [Ressources](#ressources)
+    * [Summary](#summary)
+    * [Talks/Tutorials](#talks-tutorials)
+    * [Papers](#papers)
+    * [Textbooks](#textbooks)
+    * [Projects](#projects)
   
 <a name="experiments"/>
 
@@ -51,6 +51,8 @@ For each experiment, two plots that allow to see the learning progress are saved
      The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
      
 During the control, a dynamic graph similar to the time graph allows to see the evolution of the states, action and costs, but also shows the predicted states, actions and costs computed by the model for the MPC.
+
+<a name="pendulum-v0"/>
 
 ### Pendulum-v0
 The following figure shows the mean cost over 10 runs:
@@ -76,6 +78,8 @@ The following animation shows the dynamic graph updated in real time (for anothe
 
 ![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?)
 
+<a name="mountaincarcontinuous-v0"/>
+
 ### MountainCarContinuous-v0
 
 The mountain car problem is a little bit different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, the parameter to repeat the actions has been set to 3. For the shown example, 1 control time step correspond to 3 time steps where the action is maintained. If this trick is not used, the control is not possible, or the computation times become too high.
@@ -98,6 +102,8 @@ The following animation shows the dynamic graph updated in real time (for anothe
 
 ![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?)
 
+<a name="implementation-differences"/>
+
 ## Implementation differences from the paper
 
 Compared to the implementation in the document, the scripts have been designed to perform the control in one go over a long period of time, which means :
@@ -108,6 +114,8 @@ Compared to the implementation in the document, the scripts have been designed t
 
 An option has been added to repeat the predicted actions, so that a longer time horizon can be used with the MPC, which is crucial for certain environments such as the mountain car. 
 
+<a name="limitations"/>
+
 ## Limitations
 
 - The cost function must be clearly defined as a squared distance function of the states and actions from a reference point.
@@ -117,9 +125,17 @@ An option has been added to repeat the predicted actions, so that a longer time 
 - The current implementation will not work for gym environments with discrete states or actions.
 - At the moment the current implementation do not allow controls where real time control is required, no guarentee are given for the time per iteration.
 
+<a name="installation"/>
+
 ## Installation
+
+<a name="dependencies"/>
+
 ### Dependencies
 numpy, gym, pytorch, gpytorch, matplotlib, threadpoolctl, scikit-learn, ffmpeg
+
+<a name="install-with-anaconda"/>
+
 ### Install with Anaconda (recommended)
 Download [anaconda](https://www.anaconda.com/products/individual)
 
@@ -134,6 +150,9 @@ And activate it with:
 `conda activate gp_rl_env`
 
 Depending on your platform, you may have to modify the yml file to install pytorch following the instructions [here](https://pytorch.org/get-started/locally/)
+
+<a name="run"/>
+
 ## Run
 
 Once your virtual environment is activated, write: python main.py
@@ -148,6 +167,8 @@ To use the model on a different gym environement, an other json file must be cre
 
 The plots and animations will be saved in the folder "folder_save", with the following structure:
 folder_save => environment name => time and date of the run
+
+<a name="json-parameters"/>
 
 ### Json parameters to be specified for each gym environment
 - hyperparameters_init: initial values of the hyperparameters of the gaussian processes
@@ -203,6 +224,8 @@ folder_save => environment name => time and date of the run
      
 - num_steps_env: total number of steps in the environment
  
+ <a name="todo"/>
+ 
 ## TODO
 This github is under active development. If you detect any bugs or potential improvements, please let me know.
 The following features are still to be developed :
@@ -211,7 +234,11 @@ The following features are still to be developed :
 - Providing guarantee on the maximum time per iteration
 - Gym environment with discrete states and actions
 
+<a name="ressources"/>
+
 ## Ressources
+
+<a name="brief-explanation"/>
 
 ### Brief explanation of the method
 The approach uses a model to control the environment. This family of methods are called Model Predictive Control (MPC). At each interaction with the real environment, the optimal action is obtained through an iterative approach. The model is used to evaluate certain actions over a fixed time horizon in a simulation of the environment with the learned model. This simulation is used several times at each interaction with the real world to find the optimal actions in the time horizon window with a optimizer. The first control of the time horizon is then used for the next action in the real world. In traditional control theory, the model is a mathematical model obtained from theory. Here, the model is a Gaussian process that learns from observed data. 
@@ -228,6 +255,8 @@ The following results are reported in the original paper for the double inverted
 
 Finally, an interesting feature of using this model based reinforcement learning method that was not investigated in the original paper, is the possibility to learn the model from trajectories that were obtained by other controllers, such as humans. It is thus possible to show some examples of good actions in an environment before using this method to show the agent how the environment works and speed the learning even more.
 
+<a name="talks-tutorials"/>
+
 ### Talks/Tutorials
 
 Gaussian processes: https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
@@ -235,6 +264,8 @@ Gaussian processes: https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq
 Presentation of PILCO by Marc Deisenroth: https://www.youtube.com/watch?v=AVdx2hbcsfI (method that uses the same gaussian process model, but without an MPC controller)
 
 Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
+
+<a name="papers"/>
 
 ### Papers
 
@@ -244,16 +275,22 @@ PILCO paper that describes the moment matching approximation used for states unc
 
 Marc deisenroth thesis: https://deisenroth.cc/pdf/thesis.pdf
 
+<a name="textbooks"/>
+
 ### Textbooks
 
 http://www.gaussianprocess.org/gpml/
+
+<a name="projects"/>
 
 ### Projects
 
 https://github.com/nrontsis/PILCO
 
+<a name="contact-me"/>
+
 ## Contact me
 You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
 
-I plan to do my PHD in UMontreal or UCL in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
+I plan to do my PHD in UMontreal or University College London in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
 If you know someone there or work there yourself, I would like to chat to have more informations. Thank you ! 
