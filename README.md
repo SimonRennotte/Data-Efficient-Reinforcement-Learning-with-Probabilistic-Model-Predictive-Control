@@ -29,7 +29,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
   * [How to run](#run)
   * [TODO](#todo)
   * [Ressources](#ressources)
-    * [Summary](#summary)
+    * [Brief explanation of the method](#brief-explanation)
     * [Talks/Tutorials](#talks-tutorials)
     * [Papers](#papers)
     * [Textbooks](#textbooks)
