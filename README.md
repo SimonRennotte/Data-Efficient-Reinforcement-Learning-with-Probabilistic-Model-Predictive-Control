@@ -35,7 +35,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
     * [Textbooks](###Textbooks)
     * [Projects](###Projects)
     
-##Experiments
+## Experiments
 For each experiment, two plots that allow to see the learning progress are saved in the folder "folder_save":
 
 - A time graph that shows how the control variables evolve.
