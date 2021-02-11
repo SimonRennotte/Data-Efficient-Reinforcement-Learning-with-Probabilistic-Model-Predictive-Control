@@ -229,10 +229,10 @@ folder_save => environment name => time and date of the run
 ## TODO
 This github is under active development. If you detect any bugs or potential improvements, please let me know.
 The following features are still to be developed :
-- Using a multiple shooting method for optimization for faster optimization, and (?) better constraints, from https://hal.inria.fr/inria-00390435/file/Diehl.pdf
+- Using a multiple shooting method for better optimization, and (?) better constraints
 - Updating the dynamic graph in a parallel process
 - Providing guarantee on the maximum time per iteration
-- Gym environment with discrete states and actions
+- Allowing the use of gym environment with discrete states
 
 <a name="ressources"/>
 
