@@ -20,20 +20,20 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ---
 
 ## Table of contents
-  * [Experiments](##Experiments)
-    * [Pendulum-v0](###Pendulum-v0)
-    * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
-  * [Implementation differences from the paper](##Differences)
-  * [Limitations](##Limitations)
-  * [Installation](##Installation)
-  * [How to run](##Run)
-  * [TODO](##TODO)
-  * [Ressources](##Ressources)
-    * [Summary](###Summary)
-    * [Talks/Tutorials](###Talks/Tutorials)
-    * [Papers](###Papers)
-    * [Textbooks](###Textbooks)
-    * [Projects](###Projects)
+  * [Experiments](## Experiments)
+    * [Pendulum-v0](### Pendulum-v0)
+    * [MountainCarContinuous-v0](### MountainCarContinuous-v0)
+  * [Implementation differences from the paper](## Differences)
+  * [Limitations](## Limitations)
+  * [Installation](## Installation)
+  * [How to run](## Run)
+  * [TODO](## TODO)
+  * [Ressources](## Ressources)
+    * [Summary](### Summary)
+    * [Talks/Tutorials](### Talks/Tutorials)
+    * [Papers](### Papers)
+    * [Textbooks](### Textbooks)
+    * [Projects](### Projects)
     
 ## Experiments
 For each experiment, two plots that allow to see the learning progress are saved in the folder "folder_save":
@@ -166,7 +166,7 @@ folder_save => environment name => time and date of the run
     - weights_target_state: Weigths of each state dimension in the cost function (dim=(dimension of states))
     - weights_target_state_terminal_cost: Weigths of each state dimension in the terminal cost function, at the end of the prediction horizon (dim=(dimension of states))
     - target_action: The value of the actions to attain to minimize the cost (dim=(dimension of actions))
-    = weights_target_action: Weigths of each action dimension in the cost function (dim=(dimension of actions))
+    - weights_target_action: Weigths of each action dimension in the cost function (dim=(dimension of actions))
     - s_observation: variance of the observations of states, if there is observation noise (dim=(dimension of states))
     - len_horizon: length of the horizon used to find the optinal actions. The total horizon length in timesteps = len_horizon * num_repeat_actions (dim=scalar)
     - num_repeat_actions: number of timesteps to repeat the planned actions
@@ -238,7 +238,7 @@ Safe bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
 Original paper: https://deepai.org/publication/data-efficient-reinforcement-learning-with-probabilistic-model-predictive-control
 
-PILCO paper that describes the moment matching approximation: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
+PILCO paper that describes the moment matching approximation used for states uncertainty propagation: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6654139
 
 Marc deisenroth thesis: https://deisenroth.cc/pdf/thesis.pdf
 
