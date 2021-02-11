@@ -20,7 +20,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ---
 
 ## Table of contents
-  * [Experiments](##Experiments)
+  * [Experiments](#experiments)
     * [Pendulum-v0](###Pendulum-v0)
     * [MountainCarContinuous-v0](###MountainCarContinuous-v0)
   * [Implementation differences from the paper](##Differences)
@@ -34,7 +34,8 @@ The proposed framework demonstrates superior data efficiency and learning rates 
     * [Papers](###Papers)
     * [Textbooks](###Textbooks)
     * [Projects](###Projects)
-    
+  
+<a name="experiments"/>
 ## Experiments
 For each experiment, two plots that allow to see the learning progress are saved in the folder "folder_save":
 
