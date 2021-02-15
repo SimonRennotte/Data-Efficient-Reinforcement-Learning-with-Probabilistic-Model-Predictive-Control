@@ -227,8 +227,6 @@ folder_save => environment name => time and date of the run
  <a name="todo"/>
  
 ## TODO
-This github is under active development. If you detect any bugs or potential improvements, please let me know.
-The following features are still to be developed :
 - Using a multiple shooting method for better optimization, and (?) better constraints
 - Updating the dynamic graph in a parallel process
 - Providing guarantee on the maximum time per iteration
