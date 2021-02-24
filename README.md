@@ -289,5 +289,5 @@ https://github.com/nrontsis/PILCO
 ## Contact me
 You can contact me on Linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
 
-I plan to do my PhD in UMontreal or University College London in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
+I plan to do my PhD at Mila in Montreal or University College London in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
 If you know someone there or work there yourself, I would like to chat to have more information. Thank you ! 
