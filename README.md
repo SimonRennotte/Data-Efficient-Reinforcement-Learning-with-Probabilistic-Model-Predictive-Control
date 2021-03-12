@@ -27,6 +27,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
   * [Limitations](#limitations)
   * [Installation](#installation)
   * [How to run](#run)
+  * [Known problems](#known-problems)
   * [TODO](#todo)
   * [Resources](#resources)
     * [Brief explanation of the method](#brief-explanation)
@@ -127,8 +128,8 @@ In addition to that, the optimizer for actions is LBFGS directly applied on the 
 - Actions must have an effect on the observation of the next observed step. Delays are not supported in the model. Observation must unequivocally describe the system states.
 - Sensitivity to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
 
-<a name="installation"/>
 
+<a name="installation"/>
 ## Installation
 
 <a name="dependencies"/>
@@ -226,6 +227,13 @@ folder_save => environment name => time and date of the run
     - min_prediction_std_prop_for_storage: minimum predicted standard deviation for each of the predicted states (dim=(number of states))
      
 - num_steps_env: total number of steps in the environment
+ 
+ <a name="known-problems"/>
+ 
+ ## Known problems
+ If you get the error: "ValueError: bad value(s) in fds_to_keep", 
+ set the parameters save_plot and save_plot_model_3d to 0 in global_parameters.json. 
+ The error is due to having multiple parallel processes running at the same time on some platforms.
  
  <a name="todo"/>
  
