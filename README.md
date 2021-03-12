@@ -139,15 +139,12 @@ In addition to that, the optimizer for actions is LBFGS directly applied on the 
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions. 
 - If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
 - The current implementation will not work for gym environments with discrete states or actions.
-- At the moment the current implementation do not allow controls where real-time control is required, no guarantee are given for the time per iteration.
-- Actions must have an effect on the observation of the next observed step. Delay are not supported in the model. Observation must unequivocally describe the system states.
-- Sensible to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
+- No guarantee are given for the time per iteration.
+- Actions must have an effect on the observation of the next observed step. Delays are not supported in the model. Observation must unequivocally describe the system states.
+- Sensitivity to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
 
 <a name="installation"/>
 
-- No guarentee are given for the time per iteration.
-- Actions must have an effect on the observation of the next observed step. Delay are not supported in the model. Observation must unequivocally describe the system states.
-- Sensible to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
 ## Installation
 
 <a name="dependencies"/>
@@ -250,7 +247,6 @@ folder_save => environment name => time and date of the run
  
 ## TODO
 - Using a multiple shooting method for better optimization, and (?) better constraints
-- Updating the dynamic graph in a parallel process
 - Providing guarantee on the maximum time per iteration
 - Allowing the use of gym environment with discrete states
 
