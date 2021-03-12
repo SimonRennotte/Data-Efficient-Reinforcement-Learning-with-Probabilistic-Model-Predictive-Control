@@ -11,7 +11,7 @@ import torch
 
 from control_objects.probabilistic_gp_mpc_controller import ProbabiliticGpMpcController
 from control_objects.utils import LivePlotClass, LivePlotClassParallel
-from envs import get_env_by_name
+# from envs import get_env_by_name
 
 
 def main():
@@ -50,9 +50,7 @@ def main():
 		try:
 			env = gym.make(env_to_control)
 		except:
-			env = get_env_by_name(env_to_control, {})
-			# except:
-				# raise ValueError("Could not find env " + env_to_control + ". Check the name and try again.")
+			raise ValueError("Could not find env " + env_to_control + ". Check the name and try again.")
 		if params_general['render_live_plot']:
 			if params_general['run_live_graph_parallel_process']:
 				live_plot_obj = LivePlotClassParallel(num_steps,
