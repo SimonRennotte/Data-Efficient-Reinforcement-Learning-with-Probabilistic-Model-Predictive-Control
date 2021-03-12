@@ -6,7 +6,7 @@ from scipy.stats import norm
 import torch
 import gpytorch
 from scipy.optimize import minimize
-from threadpoolctl import threadpool_limits
+# from threadpoolctl import threadpool_limits
 
 from control_objects.gp_models import ExactGPModelMonoTask
 from control_objects.abstract_class_control_object import BaseControllerObject
@@ -422,97 +422,96 @@ class ProbabiliticGpMpcController(BaseControllerObject):
 
 	@staticmethod
 	def train(queue, train_inputs, train_targets, parameters, constraints_hyperparams, lr_train, num_iter_train,
-			clip_grad_value,
-			print_train=0, step_print_train=25):
-		with threadpool_limits(limits=1, user_api='blas'), threadpool_limits(limits=1, user_api='openmp'):
-			torch.set_num_threads(1)
-			start_time = time.time()
-			# create models
-			models = create_models(train_inputs, train_targets, parameters, constraints_hyperparams)
-			best_outputscales = [model.covar_module.outputscale.detach() for model in models]
-			best_noises = [model.likelihood.noise.detach() for model in models]
-			best_lengthscales = [model.covar_module.base_kernel.lengthscale.detach() for model in models]
-			previous_losses = torch.empty(len(models))
+			clip_grad_value, print_train=0, step_print_train=25):
+		# with threadpool_limits(limits=1, user_api='blas'), threadpool_limits(limits=1, user_api='openmp'):
+		torch.set_num_threads(1)
+		start_time = time.time()
+		# create models
+		models = create_models(train_inputs, train_targets, parameters, constraints_hyperparams)
+		best_outputscales = [model.covar_module.outputscale.detach() for model in models]
+		best_noises = [model.likelihood.noise.detach() for model in models]
+		best_lengthscales = [model.covar_module.base_kernel.lengthscale.detach() for model in models]
+		previous_losses = torch.empty(len(models))
 
-			for model_idx in range(len(models)):
-				output = models[model_idx](models[model_idx].train_inputs[0])
-				mll = gpytorch.mlls.ExactMarginalLogLikelihood(models[model_idx].likelihood, models[model_idx])
-				previous_losses[model_idx] = -mll(output, models[model_idx].train_targets)
+		for model_idx in range(len(models)):
+			output = models[model_idx](models[model_idx].train_inputs[0])
+			mll = gpytorch.mlls.ExactMarginalLogLikelihood(models[model_idx].likelihood, models[model_idx])
+			previous_losses[model_idx] = -mll(output, models[model_idx].train_targets)
 
-			best_losses = previous_losses.detach().clone()
-			for model_idx in range(len(models)):
-				models[model_idx].covar_module.outputscale = \
-					models[model_idx].covar_module.raw_outputscale_constraint.lower_bound + \
-					torch.rand(models[model_idx].covar_module.outputscale.shape) * \
-					(models[model_idx].covar_module.raw_outputscale_constraint.upper_bound - \
-					 models[model_idx].covar_module.raw_outputscale_constraint.lower_bound)
+		best_losses = previous_losses.detach().clone()
+		for model_idx in range(len(models)):
+			models[model_idx].covar_module.outputscale = \
+				models[model_idx].covar_module.raw_outputscale_constraint.lower_bound + \
+				torch.rand(models[model_idx].covar_module.outputscale.shape) * \
+				(models[model_idx].covar_module.raw_outputscale_constraint.upper_bound - \
+				 models[model_idx].covar_module.raw_outputscale_constraint.lower_bound)
 
-				models[model_idx].covar_module.base_kernel.lengthscale = \
-					models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.lower_bound + \
-					torch.rand(models[model_idx].covar_module.base_kernel.lengthscale.shape) * \
-					(torch.min(torch.stack([torch.Tensor(
-						[models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.upper_bound]),
-						torch.Tensor([0.5])])) - \
-					 models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.lower_bound)
+			models[model_idx].covar_module.base_kernel.lengthscale = \
+				models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.lower_bound + \
+				torch.rand(models[model_idx].covar_module.base_kernel.lengthscale.shape) * \
+				(torch.min(torch.stack([torch.Tensor(
+					[models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.upper_bound]),
+					torch.Tensor([0.5])])) - \
+				 models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.lower_bound)
 
-				models[model_idx].likelihood.noise = \
-					models[model_idx].likelihood.noise_covar.raw_noise_constraint.lower_bound + \
-					torch.rand(models[model_idx].likelihood.noise.shape) * \
-					(models[model_idx].likelihood.noise_covar.raw_noise_constraint.upper_bound -
-					 models[model_idx].likelihood.noise_covar.raw_noise_constraint.lower_bound)
-				mll = gpytorch.mlls.ExactMarginalLogLikelihood(models[model_idx].likelihood, models[model_idx])
-				models[model_idx].train()
-				models[model_idx].likelihood.train()
-				optimizer = torch.optim.LBFGS([
-					{'params': models[model_idx].parameters()},  # Includes GaussianLikelihood parameters
-				], lr=lr_train, line_search_fn='strong_wolfe')
-				try:
-					for i in range(num_iter_train):
-						def closure():
-							optimizer.zero_grad()
-							# Output from model
-							output = models[model_idx](models[model_idx].train_inputs[0])
-							# Calc loss and backprop gradients
-							loss = -mll(output, models[model_idx].train_targets)
-							torch.nn.utils.clip_grad_value_(models[model_idx].parameters(), clip_grad_value)
-							loss.backward()
-							if print_train:
-								if i % step_print_train == 0:
-									print(
-										'Iter %d/%d - Loss: %.5f   output_scale: %.5f   lengthscale: %s   noise: %.5f' % (
-											i + 1, num_iter_train, loss.item(),
-											models[model_idx].covar_module.outputscale.item(),
-											str(models[
-												model_idx].covar_module.base_kernel.lengthscale.detach().numpy()),
-											pow(models[model_idx].likelihood.noise.item(), 0.5)
-										))
-							return loss
+			models[model_idx].likelihood.noise = \
+				models[model_idx].likelihood.noise_covar.raw_noise_constraint.lower_bound + \
+				torch.rand(models[model_idx].likelihood.noise.shape) * \
+				(models[model_idx].likelihood.noise_covar.raw_noise_constraint.upper_bound -
+				 models[model_idx].likelihood.noise_covar.raw_noise_constraint.lower_bound)
+			mll = gpytorch.mlls.ExactMarginalLogLikelihood(models[model_idx].likelihood, models[model_idx])
+			models[model_idx].train()
+			models[model_idx].likelihood.train()
+			optimizer = torch.optim.LBFGS([
+				{'params': models[model_idx].parameters()},  # Includes GaussianLikelihood parameters
+			], lr=lr_train, line_search_fn='strong_wolfe')
+			try:
+				for i in range(num_iter_train):
+					def closure():
+						optimizer.zero_grad()
+						# Output from model
+						output = models[model_idx](models[model_idx].train_inputs[0])
+						# Calc loss and backprop gradients
+						loss = -mll(output, models[model_idx].train_targets)
+						torch.nn.utils.clip_grad_value_(models[model_idx].parameters(), clip_grad_value)
+						loss.backward()
+						if print_train:
+							if i % step_print_train == 0:
+								print(
+									'Iter %d/%d - Loss: %.5f   output_scale: %.5f   lengthscale: %s   noise: %.5f' % (
+										i + 1, num_iter_train, loss.item(),
+										models[model_idx].covar_module.outputscale.item(),
+										str(models[
+											model_idx].covar_module.base_kernel.lengthscale.detach().numpy()),
+										pow(models[model_idx].likelihood.noise.item(), 0.5)
+									))
+						return loss
 
-						loss = optimizer.step(closure)
-						if loss < best_losses[model_idx]:
-							best_losses[model_idx] = loss.item()
-							best_lengthscales[model_idx] = models[model_idx].covar_module.base_kernel.lengthscale
-							best_noises[model_idx] = models[model_idx].likelihood.noise
-							best_outputscales[model_idx] = models[model_idx].covar_module.outputscale
+					loss = optimizer.step(closure)
+					if loss < best_losses[model_idx]:
+						best_losses[model_idx] = loss.item()
+						best_lengthscales[model_idx] = models[model_idx].covar_module.base_kernel.lengthscale
+						best_noises[model_idx] = models[model_idx].likelihood.noise
+						best_outputscales[model_idx] = models[model_idx].covar_module.outputscale
 
-				except Exception as e:
-					print(e)
+			except Exception as e:
+				print(e)
 
-				print(
-					'training process - model %d - time train %f - output_scale: %s - lengthscales: %s - noise: %s' % (
-						model_idx, time.time() - start_time, str(best_outputscales[model_idx].detach().numpy()),
-						str(best_lengthscales[model_idx].detach().numpy()),
-						str(best_noises[model_idx].detach().numpy())))
+			print(
+				'training process - model %d - time train %f - output_scale: %s - lengthscales: %s - noise: %s' % (
+					model_idx, time.time() - start_time, str(best_outputscales[model_idx].detach().numpy()),
+					str(best_lengthscales[model_idx].detach().numpy()),
+					str(best_noises[model_idx].detach().numpy())))
 
-			print('training process - previous marginal log likelihood: %s - new marginal log likelihood: %s' %
-				  (str(previous_losses.detach().numpy()), str(best_losses.detach().numpy())))
-			params_dict_list = []
-			for model_idx in range(len(models)):
-				params_dict_list.append({
-					'covar_module.base_kernel.lengthscale': best_lengthscales[model_idx].detach().numpy(),
-					'covar_module.outputscale': best_outputscales[model_idx].detach().numpy(),
-					'likelihood.noise': best_noises[model_idx].detach().numpy()})
-			queue.put(params_dict_list)
+		print('training process - previous marginal log likelihood: %s - new marginal log likelihood: %s' %
+			  (str(previous_losses.detach().numpy()), str(best_losses.detach().numpy())))
+		params_dict_list = []
+		for model_idx in range(len(models)):
+			params_dict_list.append({
+				'covar_module.base_kernel.lengthscale': best_lengthscales[model_idx].detach().numpy(),
+				'covar_module.outputscale': best_outputscales[model_idx].detach().numpy(),
+				'likelihood.noise': best_noises[model_idx].detach().numpy()})
+		queue.put(params_dict_list)
 
 	def check_and_close_processes(self):
 		if 'p_train' in self.__dict__ and not self.p_train._closed and not (self.p_train.is_alive()):

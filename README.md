@@ -30,6 +30,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
   * [TODO](##TODO)
   * [Ressources](##Ressources)
     * [Summary](###Summary)
+    * [Why is this paper important](###Why is this paper important)
     * [Talks/Tutorials](###Talks/Tutorials)
     * [Papers](###Papers)
     * [Textbooks](###Textbooks)
@@ -113,11 +114,12 @@ An option has been added to repeat the predicted actions, so that a longer time 
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions. 
 - If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
 - The current implementation will not work for gym environments with discrete states or actions.
-- At the moment the current implementation do not allow controls where real time control is required, no guarentee are given for the time per iteration.
-
+- No guarentee are given for the time per iteration.
+- Actions must have an effect on the observation of the next observed step. Delay are not supported in the model. Observation must unequivocally describe the system states.
+- Sensible to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
 ## Installation
 ### Dependencies
-numpy, gym, pytorch, gpytorch, matplotlib, threadpoolctl, scikit-learn, ffmpeg
+numpy, gym, pytorch, gpytorch, matplotlib, scikit-learn, ffmpeg
 ### Install with Anaconda (recommended)
 Download [anaconda](https://www.anaconda.com/products/individual)
 
@@ -226,6 +228,20 @@ The following results are reported in the original paper for the double inverted
 
 Finally, an interesting feature of using this model based reinforcement learning method that was not investigated in the original paper, is the possibility to learn the model from trajectories that were obtained by other controllers, such as humans. It is thus possible to show some examples of good actions in an environment before using this method to show the agent how the environment works and speed the learning even more.
 
+### Why is this paper important?
+Currently, real-world applications of model-free reinforcement learning algorithms are limited due to the number of interactions they require with the environment.
+
+There is a debate within the reinforcement learning community about the use of model-based reinforcement learning algorithms to improve sample efficiency, but the extent to which it can improve sample efficiency is unknown.
+
+With all the limitations that this method presents, it shows that for the applications on which it can be used, the same learning as for state-of-the-art model-free algorithms (to the extent of my knowledge) can be done with 10 to 20 times less interaction with the environment for the tests I used.
+
+This increased efficiency can be explained by different reasons, and open the search for algorithms with the same improvement in sample efficiency but without the limitations mentioned above.
+
+For example, the future predicted reward (or loss) is predicted as a distribution. By maximizing the upper confidence limit of rewards, future states with high reward uncertainty are encouraged, allowing for effective exploration.
+
+Maximizing future state uncertainty could also be used to explore environments without rewards.
+
+If future research removes the limitations of this method, this type of data efficiency could be used for real world applications where real-time learning is required and thus open many new applications for reinforcement learning.
 ### Talks/Tutorials
 
 Gaussian processes: https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
@@ -251,7 +267,8 @@ http://www.gaussianprocess.org/gpml/
 https://github.com/nrontsis/PILCO
 
 ## Contact me
-You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
+You can contact me on linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/ 
+or by email: simon.rennotte2@gmail.com
 
 I plan to do my PHD in UMontreal or UCL in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
 If you know someone there or work there yourself, I would like to chat to have more informations. Thank you ! 

@@ -1,5 +1,10 @@
 import datetime
 import os
+import time
+import threading
+import queue
+import multiprocessing
+
 
 import torch
 import gpytorch
@@ -8,7 +13,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from threadpoolctl import threadpool_limits
+# from threadpoolctl import threadpool_limits
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression, MultiTaskLasso
@@ -55,8 +60,9 @@ def draw_history(states, actions, states_next, prediction_info_over_time, num_re
 		axes[0].fill_between(indexes,
 			predictions_over_time_show[:, state_idx] - predictions_std_over_time_show[:, state_idx],
 			predictions_over_time_show[:, state_idx] + predictions_std_over_time_show[:, state_idx],
-			label=str(num_iter_prediction_ahead_show * num_repeat_actions) + 'step_' + 'bounds_prediction' + str(
-				state_idx), color=plt.get_cmap('tab20').colors[2 * state_idx], alpha=ALPHA_CONFIDENCE_BOUNDS)
+			color=plt.get_cmap('tab20').colors[2 * state_idx], alpha=ALPHA_CONFIDENCE_BOUNDS)
+		# label=str(num_iter_prediction_ahead_show * num_repeat_actions) + 'step_' + 'bounds_prediction' + str(
+		# 				state_idx)
 		if constraints_states is not None and constraints_states['use_constraints']:
 			axes[0].axhline(y=constraints_states['states_min'][state_idx],
 				color=plt.get_cmap('tab20').colors[2 * state_idx],
@@ -68,8 +74,7 @@ def draw_history(states, actions, states_next, prediction_info_over_time, num_re
 	axes[2].plot(list(indexes_control * num_repeat_actions), costs, label='cost', color='k')
 	axes[2].plot(list(indexes_control * num_repeat_actions), mean_cost_traj, label='mean predicted cost', color='orange')
 	axes[2].fill_between(list(indexes_control * num_repeat_actions), mean_cost_traj - 2 * mean_cost_traj_std,
-		mean_cost_traj + 3 * mean_cost_traj_std, label='mean predicted cost 3 std confidence bounds', color='orange',
-		alpha=ALPHA_CONFIDENCE_BOUNDS)
+		mean_cost_traj + 3 * mean_cost_traj_std, color='orange', alpha=ALPHA_CONFIDENCE_BOUNDS)
 
 	for action_idx in range(len(actions[0])):
 		axes[1].step(indexes, np.array(actions)[:, action_idx], label='a_' + str(action_idx),
@@ -78,31 +83,210 @@ def draw_history(states, actions, states_next, prediction_info_over_time, num_re
 	if update_x_limit is True:
 		axes[2].set_xlim(0, np.max(indexes))
 	axes[2].set_ylim(0, np.max([np.max(mean_cost_traj), np.max(costs)]) * 1.2)
+	plt.xlabel('Env steps')
 	return fig, axes
 
 
 def save_plot_history_process(states, actions, states_next, prediction_info_over_time, folder_save,
 		num_repeat_actions=1, constraints_states=None, num_iter_prediction_ahead_show=3):
-	with threadpool_limits(limits=1, user_api='blas'), threadpool_limits(limits=1, user_api='openmp'):
-		fig, axes = plt.subplots(nrows=3, figsize=(6, 5), sharex=True)
-		axes[0].set_title('Normed states and predictions')
-		axes[1].set_title('Normed actions')
-		axes[2].set_title('Cost and horizon cost')
-		plt.xlabel("time")
-		axes[0].set_ylim(0, 1.02)
-		axes[1].set_ylim(0, 1.02)
-		plt.tight_layout()
-		fig, axes = draw_history(states, actions, states_next, prediction_info_over_time, num_repeat_actions,
-		constraints_states, num_iter_prediction_ahead_show, fig, axes)
-		axes[0].legend()
-		axes[1].legend()
-		axes[2].legend()
-		hour = datetime.datetime.now().hour
-		minute = datetime.datetime.now().minute
-		second = datetime.datetime.now().second
-		fig.savefig(os.path.join(folder_save, 'history' + '_h' + str(hour) + '_m' + str(minute)
-											  + '_s' + str(second) + '.png'))
-		plt.close()
+	# with threadpool_limits(limits=1, user_api='blas'), threadpool_limits(limits=1, user_api='openmp'):
+	fig, axes = plt.subplots(nrows=3, figsize=(6, 5), sharex=True)
+	axes[0].set_title('Normed states and predictions')
+	axes[1].set_title('Normed actions')
+	axes[2].set_title('Cost and horizon cost')
+	plt.xlabel("time")
+	axes[0].set_ylim(0, 1.02)
+	axes[1].set_ylim(0, 1.02)
+	plt.tight_layout()
+	fig, axes = draw_history(states, actions, states_next, prediction_info_over_time, num_repeat_actions,
+	constraints_states, num_iter_prediction_ahead_show, fig, axes)
+	axes[0].legend()
+	axes[1].legend()
+	axes[2].legend()
+	hour = datetime.datetime.now().hour
+	minute = datetime.datetime.now().minute
+	second = datetime.datetime.now().second
+	fig.savefig(os.path.join(folder_save, 'history' + '_h' + str(hour) + '_m' + str(minute)
+										  + '_s' + str(second) + '.png'))
+	plt.close()
+
+
+def run_graph_parallel(queue, num_steps_total, step_pred, num_std_bounds, 
+		observation_space, action_space, constraints, time_between_updates=0.5, fontsize=8):
+	fig, axes = plt.subplots(nrows=3, figsize=(6, 5), sharex=True)
+	axes[0].set_title('Normed states and predictions')
+	axes[1].set_title('Normed actions')
+	axes[2].set_title('Cost and horizon cost')
+	plt.xlabel("Env steps")
+	axes[0].set_ylim(-0.03, 1.03)
+	axes[1].set_ylim(-0.03, 1.03)
+	axes[2].set_xlim(0, num_steps_total)
+	plt.tight_layout()
+
+	num_steps_actions = num_steps_total // step_pred
+
+	states = np.empty((num_steps_actions, observation_space.shape[0]))
+	actions = np.empty((num_steps_actions, action_space.shape[0]))
+	costs = np.empty(num_steps_actions)
+	mean_predicted_costs = np.empty_like(costs)
+	mean_predicted_costs_std = np.empty_like(mean_predicted_costs)
+	
+	min_observation = observation_space.low
+	max_observation = observation_space.high
+	min_action = action_space.low
+	max_action = action_space.high
+
+	if constraints is not None and constraints['use_constraints']:
+		for state_idx in range(observation_space.shape[0]):
+			axes[0].axhline(y=constraints['states_min'][state_idx],
+				color=plt.get_cmap('tab20').colors[2 * state_idx],
+				linestyle='-.')
+			axes[0].axhline(y=constraints['states_max'][state_idx],
+				color=plt.get_cmap('tab20').colors[2 * state_idx],
+				linestyle='-.')
+	states_lines = [axes[0].plot([], [], label='state' + str(state_idx),
+		color=plt.get_cmap('tab20').colors[2 * state_idx]) for state_idx in range(observation_space.shape[0])]
+	actions_lines = [axes[1].step([], [], label='action' + str(action_idx),
+		color=plt.get_cmap('tab20').colors[1 + 2 * action_idx]) for action_idx in range(action_space.shape[0])]
+
+	cost_line = axes[2].plot([], [], label='cost', color='k')
+	mean_predicted_costs_line = axes[2].plot([], [], label='mean predicted cost', color='orange')
+
+	predicted_states_lines = [axes[0].plot([], [],
+		label='predicted_states' + str(state_idx),
+		color=plt.get_cmap('tab20').colors[2 * state_idx], linestyle='dashed')
+		for state_idx in range(observation_space.shape[0])]
+	predicted_actions_line = [axes[1].step([], [], label='predicted_action' + str(action_idx),
+		color=plt.get_cmap('tab20').colors[1 + 2 * action_idx], linestyle='dashed')
+		for action_idx in range(action_space.shape[0])]
+	predicted_costs_line = axes[2].plot([], [], label='predicted cost', color='k', linestyle='dashed')
+
+	axes[0].legend(fontsize=fontsize)
+	axes[1].legend(fontsize=fontsize)
+	axes[2].legend(fontsize=fontsize)
+	fig.canvas.draw()  # draw and show it
+	plt.show(block=False)
+
+	num_points_show = 0
+	last_update_time = time.time()
+	while True:
+		if (time.time() - last_update_time) > time_between_updates:
+			recieved_data = False
+			last_update_time = time.time()
+			while not (queue.empty()):
+				msg = queue.get()  # Read from the queue
+				state = (np.array(msg[0]) - min_observation) / (max_observation - min_observation)
+				action = (np.array(msg[1]) - min_action) / (max_action - min_action)
+				states[num_points_show] = state
+				actions[num_points_show] = action
+				costs[num_points_show] = 0
+				mean_predicted_costs_std[num_points_show] = 10
+				mean_predicted_costs[num_points_show] = 0
+				if len(msg) > 2:
+					cost = msg[2]
+					costs[num_points_show] = cost
+					mean_predicted_costs[num_points_show] = np.nan_to_num(msg[3], nan=-1, posinf=-1, neginf=-1)
+					mean_predicted_costs_std[num_points_show] = \
+						np.nan_to_num(msg[4], copy=True, nan=99, posinf=99, neginf=99)
+				num_points_show += 1
+				recieved_data = True
+				last_update_time = time.time()
+
+			if recieved_data:
+				x_indexes = np.arange(0, num_points_show * step_pred, step_pred)
+				for state_idx in range(len(min_observation)):
+					states_lines[state_idx][0].set_data(x_indexes, states[:num_points_show, state_idx])
+
+				for action_idx in range(len(min_action)):
+					actions_lines[action_idx][0].set_data(x_indexes, actions[:num_points_show, action_idx])
+
+				if len(msg) > 2:
+					cost_line[0].set_data(x_indexes, costs[:num_points_show])
+					mean_predicted_costs_line[0].set_data(x_indexes, mean_predicted_costs[:num_points_show])
+					for idx_axes in range(len(axes)):
+						axes[idx_axes].collections.clear()
+
+					future_predicted_states = msg[5]
+					future_predicted_states_std = msg[6]
+					future_predicted_actions = msg[7]
+					future_predicted_costs = msg[8]
+					future_predicted_costs_std = msg[9]
+					np.nan_to_num(future_predicted_states, copy=False, nan=-1, posinf=-1, neginf=-1)
+					np.nan_to_num(future_predicted_states_std, copy=False, nan=99, posinf=99, neginf=0)
+					np.nan_to_num(future_predicted_costs, copy=False, nan=-1, posinf=-1, neginf=-1)
+					np.nan_to_num(future_predicted_costs_std, copy=False, nan=99, posinf=99, neginf=0)
+
+					future_indexes = np.arange(x_indexes[-1],
+						x_indexes[-1] + step_pred + len(future_predicted_states) * step_pred, step_pred)
+
+					for state_idx in range(len(min_observation)):
+						future_states_show = np.concatenate((states[num_points_show - 1, state_idx][None],
+																		future_predicted_states[:, state_idx]))
+						predicted_states_lines[state_idx][0].set_data(future_indexes, future_states_show)
+						future_states_std_show = np.concatenate(([0], future_predicted_states_std[:, state_idx]))
+						axes[0].fill_between(future_indexes,
+							future_states_show - future_states_std_show * num_std_bounds,
+							future_states_show + future_states_std_show * num_std_bounds,
+							facecolor=plt.get_cmap('tab20').colors[2 * state_idx], alpha=ALPHA_CONFIDENCE_BOUNDS,
+							label='predicted ' + str(num_std_bounds) + ' std bounds state ' + str(state_idx))
+
+					for action_idx in range(len(min_action)):
+						predicted_actions_line[action_idx][0].set_data(future_indexes,
+							np.concatenate((actions[num_points_show - 1, action_idx][None],
+													future_predicted_actions[:, action_idx])))
+
+					future_costs_show = np.concatenate(([costs[num_points_show - 1]], future_predicted_costs))
+					predicted_costs_line[0].set_data(future_indexes, future_costs_show)
+
+					future_cost_std_show = np.concatenate(([0], future_predicted_costs_std))
+
+					axes[2].fill_between(future_indexes,
+						future_costs_show - future_cost_std_show * num_std_bounds,
+						future_costs_show + future_cost_std_show * num_std_bounds,
+						facecolor='black', alpha=ALPHA_CONFIDENCE_BOUNDS,
+						label='predicted ' + str(num_std_bounds) + ' std cost bounds')
+
+					axes[2].set_ylim(0, np.max([np.max(mean_predicted_costs[:num_points_show]),
+						np.max(costs[:num_points_show])]) * 1.1)
+					axes[2].fill_between(x_indexes,
+						mean_predicted_costs[:num_points_show] -
+						mean_predicted_costs_std[:num_points_show] * num_std_bounds,
+						mean_predicted_costs[:num_points_show] +
+						mean_predicted_costs_std[:num_points_show] * num_std_bounds,
+						facecolor='orange', alpha=ALPHA_CONFIDENCE_BOUNDS,
+						label='mean predicted ' + str(num_std_bounds) + ' std cost bounds')
+
+					axes[2].set_ylim(0, np.max(cost_line[0].get_ydata()) * 1.1)
+				for ax in axes:
+					ax.relim()
+					ax.autoscale_view(True, True, True)
+				fig.canvas.draw()
+				plt.pause(0.01)
+
+
+class LivePlotClassParallel:
+	def __init__(self, num_steps_total, observation_space, action_space, constraints,
+			step_pred, num_std_bounds=2, time_between_updates=0.75, fontsize=6, use_thread=False):
+		if use_thread:
+			self.pqueue = queue.Queue()
+			graph_p = threading.Thread(target=run_graph_parallel, args=(self.pqueue, num_steps_total, step_pred, num_std_bounds,
+				observation_space, action_space, constraints, time_between_updates, fontsize))
+		else:
+			self.pqueue = multiprocessing.Queue()
+			graph_p = multiprocessing.Process(target=run_graph_parallel, args=(self.pqueue, num_steps_total, step_pred, num_std_bounds,
+				observation_space, action_space, constraints, time_between_updates, fontsize))
+			# graph_p.daemon = True
+		graph_p.start()  # Launch reader_proc() as a separate python process
+
+	def add_point_update(self, observation, action, add_info_dict=None):
+		if add_info_dict is None:
+			self.pqueue.put([observation, action])
+		else:
+			self.pqueue.put(
+			[observation, action, add_info_dict['cost'], add_info_dict['mean predicted cost'],
+				add_info_dict['mean predicted cost std'], add_info_dict['predicted states'],
+				add_info_dict['predicted states std'], add_info_dict['predicted actions'],
+				add_info_dict['predicted costs'], add_info_dict['predicted costs std']])
 
 
 class LivePlotClass:
@@ -239,6 +423,7 @@ class LivePlotClass:
 			label='mean predicted ' + str(self.num_std_bounds) + ' std cost bounds')
 
 		self.fig.canvas.draw()
+		plt.pause(0.01)
 		self.num_points_show += 1
 
 

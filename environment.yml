@@ -8,7 +8,6 @@ dependencies:
   - numpy=1.19.2
   - pytorch=1.7.0
   - cpuonly=1.0
-  - threadpoolctl=2.1.0
   - matplotlib=3.3.2
   - scikit-learn=0.23.2
   - ffmpeg=4.2.2

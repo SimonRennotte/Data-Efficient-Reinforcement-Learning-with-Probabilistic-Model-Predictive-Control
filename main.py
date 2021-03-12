@@ -10,7 +10,8 @@ from gym.wrappers.monitoring.video_recorder import VideoRecorder
 import torch
 
 from control_objects.probabilistic_gp_mpc_controller import ProbabiliticGpMpcController
-from control_objects.utils import draw_history, LivePlotClass
+from control_objects.utils import LivePlotClass, LivePlotClassParallel
+from envs import get_env_by_name
 
 
 def main():
@@ -46,16 +47,24 @@ def main():
 
 	losses_tests = np.ones((num_tests, num_steps // num_repeat_actions - num_random_actions))
 	for test_idx in range(num_tests):
-		env = gym.make(env_to_control)
+		try:
+			env = gym.make(env_to_control)
+		except:
+			env = get_env_by_name(env_to_control, {})
+			# except:
+				# raise ValueError("Could not find env " + env_to_control + ". Check the name and try again.")
 		if params_general['render_live_plot']:
-			live_plot_obj = LivePlotClass(num_steps,
-				env.observation_space, env.action_space, params_constraints_states, num_repeat_actions)
+			if params_general['run_live_graph_parallel_process']:
+				live_plot_obj = LivePlotClassParallel(num_steps,
+					env.observation_space, env.action_space, params_constraints_states, num_repeat_actions)
+			else:
+				live_plot_obj = LivePlotClass(num_steps,
+					env.observation_space, env.action_space, params_constraints_states, num_repeat_actions)
+			# LivePlotClass
 		datetime_now = datetime.datetime.now()
 		folder_save = os.path.join('folder_save', env_to_control, 'y' + str(datetime_now.year) \
-																  + '_mon' + str(datetime_now.month) + '_d' + str(
-			datetime_now.day) + '_h' + str(datetime_now.hour) \
-																  + '_min' + str(datetime_now.minute) + '_s' + str(
-			datetime_now.second))
+					+ '_mon' + str(datetime_now.month) + '_d' + str(datetime_now.day) + '_h' + str(datetime_now.hour) \
+					+ '_min' + str(datetime_now.minute) + '_s' + str(datetime_now.second))
 		if not os.path.exists(folder_save):
 			os.makedirs(folder_save)
 
@@ -125,31 +134,6 @@ def main():
 
 			if params_general['render_live_plot']:
 				live_plot_obj.add_point_update(observation, action, add_info_dict)
-				'''if not 'fig_history' in vars() or not 'axes_history' in vars():
-					fig_history, axes_history = plt.subplots(nrows=3, figsize=(6, 5), sharex=True)
-					axes_history[0].set_title('Normed states and predictions')
-					axes_history[1].set_title('Normed actions')
-					axes_history[2].set_title('Cost and horizon cost')
-					plt.xlabel("time")
-					axes_history[0].set_ylim(0, 1.02)
-					axes_history[1].set_ylim(0, 1.02)
-					axes_history[2].set_xlim(0, num_steps)
-					plt.tight_layout()
-					states = control_object.x[:control_object.num_points_memory, :control_object.num_states].numpy()
-					actions = control_object.x[:control_object.num_points_memory, control_object.num_states:].numpy()
-					states_next = control_object.y[:control_object.num_points_memory].numpy() + states
-					fig_history, axes_history = draw_history(states, actions, states_next,
-						control_object.prediction_info_over_time, num_repeat_actions, control_object.constraints_states,
-						3, fig_history, axes_history, False)
-					plt.show(block=False)
-				else:
-					states = control_object.x[:control_object.num_points_memory, :control_object.num_states].numpy()
-					actions = control_object.x[:control_object.num_points_memory, control_object.num_states:].numpy()
-					states_next = control_object.y[:control_object.num_points_memory].numpy() + states
-					fig_history, axes_history = draw_history(states, actions, states_next,
-						control_object.prediction_info_over_time, num_repeat_actions, control_object.constraints_states,
-						3, fig_history, axes_history, False)
-					fig_history.canvas.draw()'''
 
 			observation = new_observation
 			print("time loop: " + str(time.time() - time_start) + " s\n")
