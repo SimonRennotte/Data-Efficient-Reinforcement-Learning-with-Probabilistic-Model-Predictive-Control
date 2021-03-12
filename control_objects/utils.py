@@ -429,155 +429,155 @@ class LivePlotClass:
 
 def save_plot_model_3d_process(input_data, output_data, parameters, constraints, folder_save,
 		indexes_points_in_gp_memory=None, prop_extend_domain=1, n_ticks=150, total_col_max=3, fontsize=6):
-	with threadpool_limits(limits=1, user_api='blas'), \
-			threadpool_limits(limits=1, user_api='openmp'), torch.no_grad(), gpytorch.settings.fast_pred_var():
-		torch.set_num_threads(1)
-		num_input_model = len(input_data[0])
-		num_models = len(output_data[0])
-		indexes_points_outside_gp_memory = \
-			[np.delete(np.arange(len(input_data)), indexes_points_in_gp_memory[idx_model]) for
-														idx_model in range(num_models)]
-		models = [ExactGPModelMonoTask(input_data[indexes_points_in_gp_memory[idx_model]],
-		output_data[[indexes_points_in_gp_memory[idx_model]], idx_model], num_input_model)
-												for idx_model in range(num_models)]
-		output_data = output_data.numpy()
+	# with threadpool_limits(limits=1, user_api='blas'), \
+	#		threadpool_limits(limits=1, user_api='openmp'), torch.no_grad(), gpytorch.settings.fast_pred_var():
+	torch.set_num_threads(1)
+	num_input_model = len(input_data[0])
+	num_models = len(output_data[0])
+	indexes_points_outside_gp_memory = \
+		[np.delete(np.arange(len(input_data)), indexes_points_in_gp_memory[idx_model]) for
+													idx_model in range(num_models)]
+	models = [ExactGPModelMonoTask(input_data[indexes_points_in_gp_memory[idx_model]],
+	output_data[[indexes_points_in_gp_memory[idx_model]], idx_model], num_input_model)
+											for idx_model in range(num_models)]
+	output_data = output_data.numpy()
 
-		for idx_model in range(num_models):
-			# register constraints on parameters
-			if "min_std_noise" in constraints.keys():
-				models[idx_model].likelihood.noise_covar.register_constraint("raw_noise",
-					gpytorch.constraints.Interval(lower_bound=np.power(constraints['min_std_noise'], 2),
-						upper_bound=np.power(constraints['max_std_noise'], 2)))
-			if "min_outputscale" in constraints.keys():
-				models[idx_model].covar_module.register_constraint("raw_outputscale",
-					gpytorch.constraints.Interval(
-						lower_bound=constraints['min_outputscale'],
-						upper_bound=constraints['max_outputscale']))
-			if "min_lengthscale" in constraints.keys():
-				models[idx_model].covar_module.base_kernel.register_constraint("raw_lengthscale",
-					gpytorch.constraints.Interval(
-						lower_bound=constraints['min_lengthscale'],
-						upper_bound=constraints['max_lengthscale']))
-			# load parameters
-			models[idx_model].load_state_dict(parameters[idx_model])
-			models[idx_model].eval()
+	for idx_model in range(num_models):
+		# register constraints on parameters
+		if "min_std_noise" in constraints.keys():
+			models[idx_model].likelihood.noise_covar.register_constraint("raw_noise",
+				gpytorch.constraints.Interval(lower_bound=np.power(constraints['min_std_noise'], 2),
+					upper_bound=np.power(constraints['max_std_noise'], 2)))
+		if "min_outputscale" in constraints.keys():
+			models[idx_model].covar_module.register_constraint("raw_outputscale",
+				gpytorch.constraints.Interval(
+					lower_bound=constraints['min_outputscale'],
+					upper_bound=constraints['max_outputscale']))
+		if "min_lengthscale" in constraints.keys():
+			models[idx_model].covar_module.base_kernel.register_constraint("raw_lengthscale",
+				gpytorch.constraints.Interval(
+					lower_bound=constraints['min_lengthscale'],
+					upper_bound=constraints['max_lengthscale']))
+		# load parameters
+		models[idx_model].load_state_dict(parameters[idx_model])
+		models[idx_model].eval()
 
-		num_figures = int(num_input_model / total_col_max + 0.5)
-		figs = []
-		axes_s = []
-		for index_figure in range(num_figures):
-			fig = plt.figure(figsize=(15, 6))
-			axes = []
-			columns_active = np.min([num_models - (total_col_max * index_figure), total_col_max])
-			for index_ax in range(columns_active * 2):
-				axes.append(fig.add_subplot(2, columns_active, index_ax + 1, projection='3d'))
-			axes_s.append(axes)
-			figs.append(fig)
-			for subplot_idx in range(columns_active):
-				index_observation_represent = index_figure * columns_active + subplot_idx
-				if index_observation_represent >= (num_models):
-					break
-				features_importance = (1 / models[index_observation_represent].covar_module.base_kernel.lengthscale).numpy()
-				features_importance = features_importance / np.sum(features_importance)
-				best_features = np.argsort(-features_importance)[0, :2]
-				'''estimator_other_columns = Pipeline(
-					steps=[('standardscaler', StandardScaler()),
-						('features', PolynomialFeatures(2)),
-						('model', LinearRegression())])'''
-				estimator_other_columns = Pipeline(
-					steps=[('standardscaler', StandardScaler()),
-						('features', KNeighborsRegressor(n_neighbors=3, weights='distance'))])
+	num_figures = int(num_input_model / total_col_max + 0.5)
+	figs = []
+	axes_s = []
+	for index_figure in range(num_figures):
+		fig = plt.figure(figsize=(15, 6))
+		axes = []
+		columns_active = np.min([num_models - (total_col_max * index_figure), total_col_max])
+		for index_ax in range(columns_active * 2):
+			axes.append(fig.add_subplot(2, columns_active, index_ax + 1, projection='3d'))
+		axes_s.append(axes)
+		figs.append(fig)
+		for subplot_idx in range(columns_active):
+			index_observation_represent = index_figure * columns_active + subplot_idx
+			if index_observation_represent >= (num_models):
+				break
+			features_importance = (1 / models[index_observation_represent].covar_module.base_kernel.lengthscale).numpy()
+			features_importance = features_importance / np.sum(features_importance)
+			best_features = np.argsort(-features_importance)[0, :2]
+			'''estimator_other_columns = Pipeline(
+				steps=[('standardscaler', StandardScaler()),
+					('features', PolynomialFeatures(2)),
+					('model', LinearRegression())])'''
+			estimator_other_columns = Pipeline(
+				steps=[('standardscaler', StandardScaler()),
+					('features', KNeighborsRegressor(n_neighbors=3, weights='distance'))])
 
-				estimator_other_columns.fit(input_data[:, best_features].numpy(),
-					np.delete(input_data.numpy(), best_features, axis=1))
+			estimator_other_columns.fit(input_data[:, best_features].numpy(),
+				np.delete(input_data.numpy(), best_features, axis=1))
 
-				domain_extension_x = (prop_extend_domain - 1) * (
-						input_data[:, best_features[0]].max() - input_data[:, best_features[0]].min())
-				domain_extension_y = (prop_extend_domain - 1) * (
-						input_data[:, best_features[1]].max() - input_data[:, best_features[1]].min())
-				x_grid = np.linspace(input_data[:, best_features[0]].min() - domain_extension_x / 2,
-					input_data[:, best_features[0]].max() + domain_extension_x / 2, n_ticks)
-				y_grid = np.linspace(input_data[:, best_features[1]].min() - domain_extension_y / 2,
-					input_data[:, best_features[1]].max() + domain_extension_y / 2, n_ticks)
+			domain_extension_x = (prop_extend_domain - 1) * (
+					input_data[:, best_features[0]].max() - input_data[:, best_features[0]].min())
+			domain_extension_y = (prop_extend_domain - 1) * (
+					input_data[:, best_features[1]].max() - input_data[:, best_features[1]].min())
+			x_grid = np.linspace(input_data[:, best_features[0]].min() - domain_extension_x / 2,
+				input_data[:, best_features[0]].max() + domain_extension_x / 2, n_ticks)
+			y_grid = np.linspace(input_data[:, best_features[1]].min() - domain_extension_y / 2,
+				input_data[:, best_features[1]].max() + domain_extension_y / 2, n_ticks)
 
-				x_grid, y_grid = np.meshgrid(x_grid, y_grid)
+			x_grid, y_grid = np.meshgrid(x_grid, y_grid)
 
-				x_grid_1d = np.expand_dims(x_grid.flatten(), axis=-1)
-				y_grid_1d = np.expand_dims(y_grid.flatten(), axis=-1)
-				xy_grid = np.concatenate((x_grid_1d, y_grid_1d), axis=1)
-				predictions_other_columns = estimator_other_columns.predict(xy_grid)
-				all_columns = np.zeros((xy_grid.shape[0], num_input_model))
-				all_columns[:, best_features] = xy_grid
-				all_columns[:, np.delete(np.arange(num_input_model), best_features)] = predictions_other_columns
-				gauss_pred = models[index_observation_represent].likelihood(models[index_observation_represent](
-					torch.from_numpy(all_columns.astype(np.float64))))
-				z_grid_1d_mean = gauss_pred.mean.numpy()
-				z_grid_1d_std = np.sqrt(gauss_pred.stddev.numpy())
+			x_grid_1d = np.expand_dims(x_grid.flatten(), axis=-1)
+			y_grid_1d = np.expand_dims(y_grid.flatten(), axis=-1)
+			xy_grid = np.concatenate((x_grid_1d, y_grid_1d), axis=1)
+			predictions_other_columns = estimator_other_columns.predict(xy_grid)
+			all_columns = np.zeros((xy_grid.shape[0], num_input_model))
+			all_columns[:, best_features] = xy_grid
+			all_columns[:, np.delete(np.arange(num_input_model), best_features)] = predictions_other_columns
+			gauss_pred = models[index_observation_represent].likelihood(models[index_observation_represent](
+				torch.from_numpy(all_columns.astype(np.float64))))
+			z_grid_1d_mean = gauss_pred.mean.numpy()
+			z_grid_1d_std = np.sqrt(gauss_pred.stddev.numpy())
 
-				z_grid_mean = z_grid_1d_mean.reshape(x_grid.shape)
-				z_grid_std = z_grid_1d_std.reshape(x_grid.shape)
-				surf1 = axes[subplot_idx].contour3D(x_grid, y_grid, z_grid_mean, n_ticks, cmap='cool')
-				axes[subplot_idx].set_xlabel('Input ' + str(best_features[0]), fontsize=fontsize, rotation=150)
-				axes[subplot_idx].set_ylabel('Input ' + str(best_features[1]), fontsize=fontsize, rotation=150)
-				axes[subplot_idx].set_zlabel('Variation state ' + str(index_observation_represent), fontsize=fontsize,
-					rotation=60)
-				if output_data is not None:
-					axes[subplot_idx].scatter(
+			z_grid_mean = z_grid_1d_mean.reshape(x_grid.shape)
+			z_grid_std = z_grid_1d_std.reshape(x_grid.shape)
+			surf1 = axes[subplot_idx].contour3D(x_grid, y_grid, z_grid_mean, n_ticks, cmap='cool')
+			axes[subplot_idx].set_xlabel('Input ' + str(best_features[0]), fontsize=fontsize, rotation=150)
+			axes[subplot_idx].set_ylabel('Input ' + str(best_features[1]), fontsize=fontsize, rotation=150)
+			axes[subplot_idx].set_zlabel('Variation state ' + str(index_observation_represent), fontsize=fontsize,
+				rotation=60)
+			if output_data is not None:
+				axes[subplot_idx].scatter(
+				input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[0]],
+				input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[1]],
+				output_data[indexes_points_in_gp_memory[index_observation_represent], index_observation_represent],
+				marker='x', c='g')
+
+				axes[subplot_idx].scatter(
+				input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[0]],
+				input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[1]],
+				output_data[indexes_points_outside_gp_memory[index_observation_represent], index_observation_represent],
+				marker='x', c='k')
+
+				axes[subplot_idx].quiver(input_data[:-1, best_features[0]], input_data[:-1, best_features[1]],
+					output_data[:-1, index_observation_represent],
+					input_data[1:, best_features[0]] - input_data[:-1, best_features[0]],
+					input_data[1:, best_features[1]] - input_data[:-1, best_features[1]],
+					output_data[1:, index_observation_represent] - output_data[:-1, index_observation_represent],
+					color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
+
+			surf2 = axes[subplot_idx + columns_active].contour3D(x_grid, y_grid, z_grid_std, n_ticks, cmap='cool')
+			axes[subplot_idx + columns_active].set_xlabel('Input ' + str(best_features[0]), fontsize=fontsize, rotation=150)
+			axes[subplot_idx + columns_active].set_ylabel('Input ' + str(best_features[1]), fontsize=fontsize, rotation=150)
+			axes[subplot_idx + columns_active].set_zlabel('Uncertainty: std state ' + str(index_observation_represent),
+				fontsize=fontsize, rotation=60)
+
+			if output_data is not None:
+				predictions_data_outside_memory = models[index_observation_represent].likelihood(
+					models[index_observation_represent](
+						input_data[indexes_points_outside_gp_memory[index_observation_represent]]))
+				errors_outside_memory = np.abs(predictions_data_outside_memory.mean.numpy() -
+					output_data[indexes_points_outside_gp_memory[index_observation_represent], index_observation_represent])
+				errors = np.zeros_like(input_data[:, 0])
+				errors[indexes_points_outside_gp_memory[index_observation_represent]] = errors_outside_memory
+				axes[subplot_idx + columns_active].scatter(
 					input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[0]],
 					input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[1]],
-					output_data[indexes_points_in_gp_memory[index_observation_represent], index_observation_represent],
-					marker='x', c='g')
-
-					axes[subplot_idx].scatter(
+					errors[indexes_points_in_gp_memory[index_observation_represent]], marker='x', c='g')
+				axes[subplot_idx + columns_active].scatter(
 					input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[0]],
 					input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[1]],
-					output_data[indexes_points_outside_gp_memory[index_observation_represent], index_observation_represent],
-					marker='x', c='k')
+					errors_outside_memory, marker='x', c='k')
+				axes[subplot_idx + columns_active].quiver(
+					input_data[:-1, best_features[0]], input_data[:-1, best_features[1]],
+					errors[:-1],
+					input_data[1:, best_features[0]] - input_data[:-1, best_features[0]],
+					input_data[1:, best_features[1]] - input_data[:-1, best_features[1]],
+					errors[1:] - errors[:-1],
+					color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
 
-					axes[subplot_idx].quiver(input_data[:-1, best_features[0]], input_data[:-1, best_features[1]],
-						output_data[:-1, index_observation_represent],
-						input_data[1:, best_features[0]] - input_data[:-1, best_features[0]],
-						input_data[1:, best_features[1]] - input_data[:-1, best_features[1]],
-						output_data[1:, index_observation_represent] - output_data[:-1, index_observation_represent],
-						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
-
-				surf2 = axes[subplot_idx + columns_active].contour3D(x_grid, y_grid, z_grid_std, n_ticks, cmap='cool')
-				axes[subplot_idx + columns_active].set_xlabel('Input ' + str(best_features[0]), fontsize=fontsize, rotation=150)
-				axes[subplot_idx + columns_active].set_ylabel('Input ' + str(best_features[1]), fontsize=fontsize, rotation=150)
-				axes[subplot_idx + columns_active].set_zlabel('Uncertainty: std state ' + str(index_observation_represent),
-					fontsize=fontsize, rotation=60)
-
-				if output_data is not None:
-					predictions_data_outside_memory = models[index_observation_represent].likelihood(
-						models[index_observation_represent](
-							input_data[indexes_points_outside_gp_memory[index_observation_represent]]))
-					errors_outside_memory = np.abs(predictions_data_outside_memory.mean.numpy() -
-						output_data[indexes_points_outside_gp_memory[index_observation_represent], index_observation_represent])
-					errors = np.zeros_like(input_data[:, 0])
-					errors[indexes_points_outside_gp_memory[index_observation_represent]] = errors_outside_memory
-					axes[subplot_idx + columns_active].scatter(
-						input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[0]],
-						input_data[indexes_points_in_gp_memory[index_observation_represent], best_features[1]],
-						errors[indexes_points_in_gp_memory[index_observation_represent]], marker='x', c='g')
-					axes[subplot_idx + columns_active].scatter(
-						input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[0]],
-						input_data[indexes_points_outside_gp_memory[index_observation_represent], best_features[1]],
-						errors_outside_memory, marker='x', c='k')
-					axes[subplot_idx + columns_active].quiver(
-						input_data[:-1, best_features[0]], input_data[:-1, best_features[1]],
-						errors[:-1],
-						input_data[1:, best_features[0]] - input_data[:-1, best_features[0]],
-						input_data[1:, best_features[1]] - input_data[:-1, best_features[1]],
-						errors[1:] - errors[:-1],
-						color='k', linestyle="solid", alpha=0.3, arrow_length_ratio=0.001, length=0.9)
-
-			plt.tight_layout()
-			hour = datetime.datetime.now().hour
-			minute = datetime.datetime.now().minute
-			second = datetime.datetime.now().second
-			fig.savefig(os.path.join(folder_save, 'model_3d' + '_h' + str(hour) + '_m' + str(minute)
-															  + '_s' + str(second) + '.png'))
-			plt.close()
+		plt.tight_layout()
+		hour = datetime.datetime.now().hour
+		minute = datetime.datetime.now().minute
+		second = datetime.datetime.now().second
+		fig.savefig(os.path.join(folder_save, 'model_3d' + '_h' + str(hour) + '_m' + str(minute)
+														  + '_s' + str(second) + '.png'))
+		plt.close()
 
 
 def create_models(train_inputs, train_targets, parameters, constraints):
