@@ -139,6 +139,8 @@ def main():
 		if params_general['save_render_env']:
 			rec.close()
 
+		if params_general['render_live_plot'] and params_general['run_live_graph_parallel_process']:
+			live_plot_obj.graph_p.terminate()
 		# save plots at the end
 		control_object.check_and_close_processes()
 		control_object.save_plot_model_3d()
