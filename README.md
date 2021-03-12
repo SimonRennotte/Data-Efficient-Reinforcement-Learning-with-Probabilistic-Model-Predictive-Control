@@ -123,7 +123,7 @@ In addition to that, the optimizer for actions is LBFGS directly applied on the 
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions. 
 - If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
 - The current implementation will not work for gym environments with discrete states or actions.
-- No guarantee are given for the time per iteration.
+- No guarantee is given for the time per iteration.
 - Actions must have an effect on the observation of the next observed step. Delays are not supported in the model. Observation must unequivocally describe the system states.
 - Sensitivity to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
 
