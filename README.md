@@ -136,11 +136,11 @@ In addition to that, the optimizer for actions is LBFGS directly applied on the 
 <a name="dependencies"/>
 
 ### Dependencies
-numpy, gym, pytorch, gpytorch, matplotlib, threadpoolctl, scikit-learn, ffmpeg
+
+numpy, gym, pytorch, gpytorch, matplotlib, scikit-learn, ffmpeg
 
 <a name="install-with-anaconda"/>
 
-numpy, gym, pytorch, gpytorch, matplotlib, scikit-learn, ffmpeg
 ### Install with Anaconda (recommended)
 Download [anaconda](https://www.anaconda.com/products/individual)
 
