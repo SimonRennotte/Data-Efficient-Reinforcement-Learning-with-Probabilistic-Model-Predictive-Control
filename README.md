@@ -130,6 +130,7 @@ In addition to that, the optimizer for actions is LBFGS directly applied on the 
 
 
 <a name="installation"/>
+
 ## Installation
 
 <a name="dependencies"/>
