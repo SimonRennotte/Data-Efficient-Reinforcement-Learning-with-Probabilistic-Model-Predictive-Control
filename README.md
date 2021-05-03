@@ -27,8 +27,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
   * [Limitations](#limitations)
   * [Installation](#installation)
   * [How to run](#run)
-  * [Known problems](#known-problems)
-  * [TODO](#todo)
+  * [Issues](#issues)
   * [Resources](#resources)
     * [Brief explanation of the method](#brief-explanation)
     * [Why is this paper important](#why-is-this-paper-important)
@@ -211,8 +210,8 @@ folder_save => environment name => time and date of the run
      - area_penalty_multiplier: At the moment, constraints on the states are added as a penalty in the predicted cost trajectory. The value of this penalty is the area of the predicted state distribution that violate the constraints. This penalty is multiplied by this parameter 
      
 - params_train: parameters used for the training of the gaussian processes hyper parameters, done in a parallel process
-    - lr_train learning rate
-    - n_iter_train": number of training iteration
+    - lr_train: learning rate
+    - n_iter_train: number of training iteration
     - train_every_n_points: training will occur at constant time interval. This parameter set the frequency of training process in number of time steps
     - clip_grad_value: maximum value of the gradient of the trained parameters, for more stability
     - print_train: if set to 1, the values optimized will be printed during training
@@ -229,19 +228,12 @@ folder_save => environment name => time and date of the run
      
 - num_steps_env: total number of steps in the environment
  
- <a name="known-problems"/>
+ <a name="issues"/>
  
- ## Known problems
+ ## Issues
  If you get the error: "ValueError: bad value(s) in fds_to_keep", 
  set the parameters save_plot and save_plot_model_3d to 0 in global_parameters.json. 
  The error is due to having multiple parallel processes running at the same time on some platforms.
- 
- <a name="todo"/>
- 
-## TODO
-- Using a multiple shooting method for better optimization, and (?) better constraints
-- Providing guarantee on the maximum time per iteration
-- Allowing the use of gym environment with discrete states
 
 <a name="resources"/>
 
@@ -258,9 +250,6 @@ for each state, one Gaussian process is used which has n (number of states) + m 
 One specificity of the paper is that for this method, uncertainties propagate during trajectory calculations which allows to calculate the uncertainty of the loss in the window of the simulation horizon. This makes it possible to explore more efficiently by rewarding states where the uncertainty of the loss is high. It can also be used to get a real-time idea of the model's certainty about the future. Uncertainty can also be used to impose security constraints. This can be done by prohibiting visits to states where the uncertainty is too high, by imposing constraints on the lower or upper limit of the state confidence interval. This method is already used for safe Bayesian optimization. For example, it has been used [to optimize UAV controllers to avoid crashes during optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
 
 This approach allows learning fast enough to enable online learning from scratch, which opens up many possibilities for Reinforcement Learning in new applications, with some more research. 
-Here is the results reported in the paper for the double inverted pendulum. 
-
-![result paper](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Article_results.png?raw=true)
 
 <a name="why-is-this-paper-important"/>
 
@@ -315,7 +304,7 @@ https://github.com/nrontsis/PILCO
 
 ## Contact me
 You can contact me on Linkedin: https://www.linkedin.com/in/simon-rennotte-96aa04169/
-or by email: simon.rennotte2@gmail.com
+or by email: simon.rennotte@protonmail.com
 
-I plan to do my PhD at Mila in Montreal or University College London in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
+I plan to do my PhD at Mila in Montreal in the beginning of 2022 to improve this method and extend it to more application cases, with high dimensionality of states and actions, noise, delayed reward, etc. 
 If you know someone there or work there yourself, I would like to chat to have more information. Thank you ! 
