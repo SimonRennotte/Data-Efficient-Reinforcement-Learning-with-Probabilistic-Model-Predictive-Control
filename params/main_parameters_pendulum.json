@@ -1,0 +1,8 @@
+{
+	"env_to_control":  "Pendulum-v0", "render_env": 1, "verbose":  1,
+	"render_live_plots_2d": 1,
+	"save_plots_2d":  1, "save_plots_model_3d":  1,
+	"save_render_env": 1, "freq_iter_save_plots":  30,
+	"number_tests_to_run": 1, "run_live_graph_parallel_process": 1,
+	"num_steps_env": 150, "random_actions_init":  20
+}

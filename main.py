@@ -1,171 +1,115 @@
 import time
 import os
-import datetime
 
 import numpy as np
-import matplotlib.pyplot as plt
 import gym
 import json
-from gym.wrappers.monitoring.video_recorder import VideoRecorder
-import torch
 
-from control_objects.probabilistic_gp_mpc_controller import ProbabiliticGpMpcController
-from control_objects.utils import LivePlotClass, LivePlotClassParallel
-# from envs import get_env_by_name
+from control_objects.gp_mpc_controller import GpMpcController
+from control_objects.utils import init_control, init_visu_and_folders, plot_costs, close_run
 
 
 def main():
-	with open(os.path.join("params", "global_parameters.json")) as json_data_file:
-		params_json_general = json.load(json_data_file)
-	params_general = params_json_general['general_parameters']
-	env_to_control = params_general['env_to_control']  # Pendulum-v0 or MountainCarContinuous-v0
-	json_file_params = os.path.join("params", "params_" + env_to_control + ".json")
-	if not (os.path.exists(json_file_params)):
-		raise FileNotFoundError('The parameter file ' + json_file_params + ' does not exist. You must first create it.')
-	with open(json_file_params) as json_data_file:
-		params_json_env = json.load(json_data_file)
-	hyperparameters_init = params_json_env['hyperparameters_init']
-	params_constraints_hyperparams = params_json_env['params_constraints_hyperparams']
-	params_constraints_states = params_json_env['params_constraints_states']
-	params_controller = params_json_env['params_controller']
-	params_train = params_json_env['params_train']
-	params_actions_optimizer = params_json_env['params_actions_optimizer']
-	params_init = params_json_env['params_init']
-	params_memory = params_json_env['params_memory']
+	with open(os.path.join('params', 'main_parameters_pendulum.json')) as json_data_file:
+		params_general = json.load(json_data_file)
 
-	num_steps = params_json_env['num_steps_env']
-	num_random_actions = params_init['num_random_actions_init']
-	num_repeat_actions = params_controller["num_repeat_actions"]
+	params_control_path = os.path.join('params', 'params_' + params_general['env_to_control'] + '.json')
+
+	if not (os.path.exists(params_control_path)):
+		raise FileNotFoundError('The parameter file ' + params_control_path + ' does not exist. You must first create it.')
+
+	with open(params_control_path) as json_data_file:
+		params_controller_dict = json.load(json_data_file)
+
+	num_steps = params_general['num_steps_env']
 	num_tests = params_general['number_tests_to_run']
+	num_repeat_actions = params_controller_dict['controller']['num_repeat_actions']
+	random_actions_init = params_general['random_actions_init']
 
-	target_state = np.array(params_controller['target_state'])
-	weights_target_state = np.diag(params_controller['weights_target_state'])
-	weights_target_state_terminal_cost = np.diag(params_controller['weights_target_state_terminal_cost'])
-	target_action = np.array(params_controller['target_action'])
-	weights_target_action = np.diag(params_controller['weights_target_action'])
-	s_observation = np.diag(params_controller['s_observation'])
-
-	losses_tests = np.ones((num_tests, num_steps // num_repeat_actions - num_random_actions))
-	for test_idx in range(num_tests):
+	costs_runs = np.ones((num_tests, num_steps))
+	for idx_test in range(num_tests):
 		try:
-			env = gym.make(env_to_control)
+			env = gym.make(params_general['env_to_control'])
 		except:
-			raise ValueError("Could not find env " + env_to_control + ". Check the name and try again.")
-		if params_general['render_live_plot']:
-			if params_general['run_live_graph_parallel_process']:
-				live_plot_obj = LivePlotClassParallel(num_steps,
-					env.observation_space, env.action_space, params_constraints_states, num_repeat_actions)
-			else:
-				live_plot_obj = LivePlotClass(num_steps,
-					env.observation_space, env.action_space, params_constraints_states, num_repeat_actions)
-			# LivePlotClass
-		datetime_now = datetime.datetime.now()
-		folder_save = os.path.join('folder_save', env_to_control, 'y' + str(datetime_now.year) \
-					+ '_mon' + str(datetime_now.month) + '_d' + str(datetime_now.day) + '_h' + str(datetime_now.hour) \
-					+ '_min' + str(datetime_now.minute) + '_s' + str(datetime_now.second))
-		if not os.path.exists(folder_save):
-			os.makedirs(folder_save)
+			raise ValueError('Could not find env ' + params_general['env_to_control'] +
+							 '. Check the name and try again.')
+		env_str = env.env.spec.entry_point.replace('-', '_').replace(':', '_').replace('.', '_')
 
-		if params_general['save_render_env']:
-			if not os.path.exists(os.path.join('folder_save', env_to_control)):
-				os.makedirs(os.path.join('folder_save', env_to_control))
-			rec = VideoRecorder(env, path=os.path.join(folder_save, 'anim' + env_to_control + '.mp4'))
+		live_plot_obj, rec, folder_save = init_visu_and_folders(env=env, num_steps=num_steps, env_str=env_str,
+										params_general=params_general, params_controller_dict=params_controller_dict)
 
-		env.reset()
+		ctrl_obj = GpMpcController(observation_space=env.observation_space, action_space=env.action_space,
+										params_dict=params_controller_dict, folder_save=folder_save)
 
-		control_object = ProbabiliticGpMpcController(env.observation_space, env.action_space, params_controller,
-			params_train, params_actions_optimizer, params_constraints_states, hyperparameters_init,
-			target_state, weights_target_state, weights_target_state_terminal_cost,
-			target_action, weights_target_action,
-			params_constraints_hyperparams, env_to_control, folder_save, num_repeat_actions)
+		ctrl_obj, env, live_plot_obj, rec, obs, action, cost, \
+			obs_prev_ctrl, costs_runs, obs_lst, actions_lst, rewards_lst = init_control(
+					ctrl_obj=ctrl_obj, env=env, live_plot_obj=live_plot_obj, rec=rec,
+					params_general=params_general, random_actions_init=random_actions_init,
+					costs_tests=costs_runs, idx_test=idx_test, num_repeat_actions=num_repeat_actions)
 
-		observation, reward, done, info = env.step(env.action_space.sample())
-		for idx_random_action in range(num_random_actions):
-			control_object.action = env.action_space.sample()
-			action = env.action_space.sample()
-			for idx_action in range(num_repeat_actions):
-				new_observation, reward, done, info = env.step(action)
-				if params_general['render_env']:
-					try:
-						env.render()
-					except:
-						pass
-				if params_general['save_render_env']:
-					try:
-						rec.capture_frame()
-					except:
-						pass
-			if params_general['render_live_plot']:
-				live_plot_obj.add_point_update(observation, action)
-			control_object.add_point_memory(observation, action, new_observation, reward)
-			observation = new_observation
-
-		for index_iter in range((num_steps // num_repeat_actions) - params_init['num_random_actions_init']):
+		info_dict = None
+		for iter_ctrl in range(random_actions_init, num_steps):
 			time_start = time.time()
-			action, add_info_dict = control_object.compute_prediction_action(observation, s_observation)
-			for idx_action in range(num_repeat_actions):
-				new_observation, reward, done, info = env.step(action)
-				if params_general['render_env']:
-					try:
-						env.render()
-					except:
-						pass
-				if params_general['save_render_env']:
-					try:
-						rec.capture_frame()
-					except:
-						pass
-			losses_tests[test_idx, index_iter] = add_info_dict['cost']
-			control_object.add_point_memory(observation, action, new_observation, reward,
-											add_info_dict=add_info_dict, params_memory=params_memory)
-			if params_general['verbose']:
-				for key in add_info_dict:
-					print(key + ': ' + str(add_info_dict[key]))
+			if iter_ctrl % num_repeat_actions == 0:
+				if info_dict is not None:
+					predicted_state = info_dict['predicted states'][0]
+					predicted_state_std = info_dict['predicted states std'][0]
+					check_storage = True
+				else:
+					predicted_state = None
+					predicted_state_std = None
+					check_storage = False
+				# If num_repeat_actions != 1, the gaussian process models predict that much step ahead,
+				# For iteration k, the memory holds obs(k - step), action (k - step), obs(k), reward(k)
+				# Add memory is put before compute action because it uses data from step before
+				ctrl_obj.add_memory(obs=obs_prev_ctrl, action=action, obs_new=obs,
+									reward=-cost, check_storage=check_storage,
+									predicted_state=predicted_state,
+									predicted_state_std=predicted_state_std)
+				action, info_dict = ctrl_obj.compute_action(obs_mu=obs)
 
-			if params_general['save_plot'] and \
-					(control_object.num_points_memory % params_general["frequency_iter_save"] == 0):
-				control_object.save_plot_history()
+				if params_general['verbose']:
+					for key in info_dict:
+						print(key + ': ' + str(info_dict[key]))
+				obs_prev_ctrl = obs
 
-			if params_general['save_plot_model_3d'] and \
-					(control_object.num_points_memory % params_general["frequency_iter_save"] == 0):
-				control_object.save_plot_model_3d()
+			obs_new, reward, done, info = env.step(action)
 
-			if params_general['render_live_plot']:
-				live_plot_obj.add_point_update(observation, action, add_info_dict)
+			cost, cost_var = ctrl_obj.compute_cost_unnormalized(obs, action)
+			costs_runs[idx_test, iter_ctrl] = cost
+			obs_lst.append(obs)
+			actions_lst.append(action)
+			rewards_lst.append(-cost)
 
-			observation = new_observation
-			print("time loop: " + str(time.time() - time_start) + " s\n")
-		env.__exit__()
-		if params_general['save_render_env']:
-			rec.close()
+			if params_general['render_env']:
+				try: env.render()
+				except: pass
+			if rec is not None:
+				try: rec.capture_frame()
+				except: pass
 
-		if params_general['render_live_plot'] and params_general['run_live_graph_parallel_process']:
-			live_plot_obj.graph_p.terminate()
-		# save plots at the end
-		control_object.check_and_close_processes()
-		control_object.save_plot_model_3d()
-		control_object.save_plot_history()
-		# wait for the processes to be finished
-		control_object.p_save_plot_model_3d.join()
-		control_object.p_save_plot_model_3d.close()
+			if params_general['save_plots_2d'] and \
+					(iter_ctrl % params_general['freq_iter_save_plots'] == 0):
+				ctrl_obj.save_plots_2d(states=obs_lst, actions=actions_lst, rewards=rewards_lst,
+										random_actions_init=random_actions_init)
 
-		control_object.p_save_plot_history.join()
-		control_object.p_save_plot_history.close()
-		plt.close()
+			if params_general['save_plots_model_3d'] and \
+					(iter_ctrl % params_general['freq_iter_save_plots'] == 0):
+				ctrl_obj.save_plots_model_3d()
+
+			if live_plot_obj is not None:
+				live_plot_obj.update(obs=obs, cost=cost, action=action, info_dict=info_dict)
+
+			obs = obs_new
+			print('time loop: ' + str(time.time() - time_start) + ' s\n')
+
+		close_run(ctrl_obj=ctrl_obj, env=env, obs_lst=obs_lst, actions_lst=actions_lst,
+					rewards_lst=rewards_lst, random_actions_init=random_actions_init,
+					live_plot_obj=live_plot_obj, rec=rec, save_plots_2d=params_general['save_plots_2d'],
+					save_plots_3d=params_general['save_plots_model_3d'])
 
 	if num_tests > 1:
-		mean_cost_runs = losses_tests.mean(0)
-		std_cost_runs = losses_tests.std(0)
-		plt.figure()
-		indexes = (np.arange(losses_tests.shape[1]) + num_random_actions) * num_repeat_actions
-		plt.plot(indexes, mean_cost_runs, label='mean cost run')
-		plt.fill_between(indexes, mean_cost_runs - 2 * std_cost_runs, mean_cost_runs + 2 * std_cost_runs,
-			label='cost runs 2 std', alpha=0.6)
-		plt.title('Cost of the different runs for env ' + env_to_control)
-		plt.ylabel('Cost')
-		plt.xlabel('Number of environment steps')
-		plt.savefig(os.path.join('folder_save', env_to_control, 'Cost_runs_' + env_to_control))
-		plt.show()
+		plot_costs(costs=costs_runs, env_str=env_str)
 
 
 if __name__ == '__main__':
