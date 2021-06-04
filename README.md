@@ -166,13 +166,13 @@ python main.py
 To run the script using your environment, you must first define it as a gym environment, 
 then create two json files inside the folder params that contains all the parameters relative to the control.
 
-- The parameters of the main script are stored in parameters.json, which specifies:
+- The parameters of the main script are stored in main_parameters_env.json, which specifies:
     - Which gym environment to use, 
     - The parameters relative to visualizations. 
     - The number of runs to perform for the computation of mean losses. 
         If it is set to 1, the mean losses will not be computed.
 
-- For each gym environment, a json file containing the gym environment name contains all the parameters relative to this environment, and the control used.
+- For each gym environment, a json file containing all the parameters relative to this environment for the control used.
 The syntax is parameters_"gym_env_name".json
 
 The plots and animations will be saved in the folder "folder_save", with the following structure:
