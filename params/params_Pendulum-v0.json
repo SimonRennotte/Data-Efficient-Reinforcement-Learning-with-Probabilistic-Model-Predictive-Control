@@ -12,19 +12,19 @@
 	},
 	"controller": {
 		"target_state_norm": [1, 0.5, 0.5], "weight_state": [1, 0.1, 0.1],
-		"weight_state_terminal": [10, 1, 1],
-		"target_action_norm": [0.5], "weight_action": [0.1],
+		"weight_state_terminal": [10, 5, 5],
+		"target_action_norm": [0.5], "weight_action": [0.05],
 		"obs_var_norm": [1e-6, 1e-6, 1e-6], "len_horizon": 15, "exploration_factor": 3,
-		"limit_action_change": 0, "max_change_action_norm": [0.05],
-		"num_repeat_actions": 1, "clip_lower_bound_cost_to_0": 0
+		"limit_action_change": false, "max_change_action_norm": [0.05],
+		"num_repeat_actions": 1, "clip_lower_bound_cost_to_0": false
 	},
 	"constraints_states": {
-		"use_constraints": 0, "state_min": [-0.1, 0.05, 0.05], "state_max":  [1.1, 0.95, 0.925],
+		"use_constraints": false, "state_min": [-0.1, 0.05, 0.05], "state_max":  [1.1, 0.95, 0.925],
 		"area_multiplier": 1
 	},
 	"train": {
 		"lr_train": 7e-3, "iter_train": 15, "training_frequency": 10, "clip_grad_value": 1e-3,
-		"print_train": 0, "step_print_train": 5
+		"print_train": false, "step_print_train": 5
 	},
 	"actions_optimizer": {
 		"disp": null, "maxcor": 2, "ftol": 1e-15, "gtol": 1e-15, "eps": 1e-2, "maxfun": 2,

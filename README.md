@@ -1,9 +1,10 @@
 # Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/gif_total.gif?)
 
-Control agents learning from scratch
+Control animation           |  Models and points in memory
+:-------------------------:|:-------------------------:
+![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?)  |  ![models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true)
 
-![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?)
 
 ## Overview
 Unofficial implementation of the paper [Data-Efficient Reinforcement Learning with Probabilistic Model Predictive Control](https://arxiv.org/pdf/1706.06491v1.pdf) with Pytorch and GPyTorch.
@@ -23,38 +24,47 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ---
 
 ## Table of contents
-  * [Experiments](#experiments)
+  * [Results](#results)
     * [Pendulum-v0](#pendulum-v0)
     * [MountainCarContinuous-v0](#mountaincarcontinuous-v0)
-  * [Implementation differences from the paper](#implementation-differences)
-  * [Limitations](#limitations)
-  * [Installation](#installation)
-  * [How to run](#run)
-  * [Issues](#issues)
+  * [Usage](#Usage)
+    * [Installation](#installation)
+    * [How to run](#run)
   * [Resources](#resources)
     * [Brief explanation of the method](#brief-explanation)
     * [Why is this paper important](#why-is-this-paper-important)
+    * [Remarks](#remarks)
+        * [Differences from the paper](#differences)
+        * [Limitations](#limitations)
     * [Talks/Tutorials](#talks-tutorials)
     * [Papers](#papers)
     * [Textbooks](#textbooks)
     * [Projects](#projects)
-  
-<a name="experiments"/>
+ 
+<a name="results"/>
     
-## Experiments
-For each experiment, two plots that allow to see the learning progress are saved in the folder "folder_save":
+## Results
+For each experiment, two plots allow to see and understand the control. 
 
-- A time graph that shows how the control variables evolve.
-   - The top graph: states along with the predicted states and uncertainty from n time steps earlier. The value of n is specified in the legend. 
-   - The middle graph: actions
-   - The bottom graph: The real cost, predicted trajectory cost (mean of future predicted cost) and its uncertainty. Note that the uncertainty of the trajectory cost can be used to identify times where the future is uncertain for the model.
+- 2d plots showing the states, actions and costs during control
+   - The top graph shows the states along with the predicted states and uncertainty from n time steps earlier. The value of n is specified in the legend. 
+   - The middle graph shows the actions
+   - The bottom graph shows the real cost alongside with the predicted trajectory cost, which is the mean of future predicted cost, and its uncertainty.
 
-- 3d visualizations that shows the Gaussian processes model and points in memory. 
-     In this plot, each of the graphs of the top line represents the variation of states for the next step as a function of the current states and actions. The indices represented in the xy axis name represent either states or actions. For example, the input with index 3 represent the action for the pendulum. Action indices are defined as higher than the state indices.
-     The axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales in the Gaussian Process for the predicted state variation, so that the x-y axes may be different for each graph. The graphs of the bottom line represent the predicted uncertainty, and the points are the prediction errors.
-     The points stored in the memory of the Gaussian process model are shown in green, and the points that are not stored in black.
+- 3d plots showing the Gaussian processes models and points in memory. 
+     In this plot, each of the graphs of the top line represents the change in states for the next step as a function of the current states and actions. 
+     The indices represented in the xy axis name represent either states or actions. 
+     For example, the input with index 3 represent the action for the pendulum. Action indices are defined as higher than the state indices.
+     As not every input of the gp can be shown on the 3d graph, 
+     the axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales.
+     So, the x-y axes may be different for each graph. 
+     The graphs of the bottom line represent the predicted uncertainty, and the points are the prediction errors.
+     The points stored in the memory of the Gaussian process model are shown in green, 
+     and the points that are not stored because they were too similar to other points already in memory are represented in black.
      
-During the control, a dynamic graph similar to the time graph allows to see the evolution of the states, action and costs, but also shows the predicted states, actions and costs computed by the model for the MPC.
+During the control, a dynamic graph similar to the 2d plot described above allows to see the evolution of the 
+states, action and costs, but also shows the predicted states, actions and costs computed by the model for the MPC. 
+The predicted future states, actions and loss are represented with dashed lines, along with their confidence interval (2 standard deviation).
 
 <a name="pendulum-v0"/>
 
@@ -70,15 +80,15 @@ The following figures and animation shows an example of control.
 
 ![control animation](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_pendulum.gif?)
 
-The following figure shows the time graph for the inverted pendulum that is shown in the animation.
+The following figure shows the 2d graphs for the inverted pendulum that is shown in the animation.
 
 ![stories](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_pendulum.png?raw=true) 
 
-The gaussian process models and the points in memory are represented in the following figure.
+And the gaussian process models and the points in memory:
 
 ![3d models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true)
 
-The following animation shows the dynamic graph updated in real-time (for another run). The predicted future states, actions and loss are represented with dashed lines, along with their confidence interval (2 standard deviation).
+The dynamic graph updated in real-time:
 
 ![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?)
 
@@ -102,141 +112,49 @@ The following figures and animation shows an example of control.
 
 ![3d_models](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_mountain_car.png?raw=True)
 
-The following animation shows the dynamic graph updated in real-time (for another run). The predicted future states, actions and loss are represented with dashed lines, along with their confidence interval (2 standard deviation).
-
 ![animation_real_time](https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?)
 
-<a name="implementation-differences"/>
+<a name="usage"/>
 
-## Implementation differences from the paper
-
-Compared to the implementation in the paper, the scripts have been designed to perform the control in one go over a long time without any reset, which means :
-- The optimized function in the mpc is the lower confidence bound of the expected long-term cost to reward exploration and avoid getting stuck in a local minimum.
-- The environment is not reset, learning is done in one go. Thus, the hyper-parameters training can not be done between trials. The learning of the hyperparameters and the storage of the visualizations are performed in a parallel process at regular time intervals in order to minimize the computation time at each control iteration.
-- An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
-
-In addition to that, the optimizer for actions is LBFGS directly applied on the actions. The particular structure of the problem is not used to speed the computation times and an option has been added to repeat the predicted actions, so that a longer time horizon can be used with the MPC, which is crucial for certain environments such as the mountain car. 
-
-<a name="limitations"/>
-
-## Limitations
-
-- The cost function must be clearly defined as a squared distance function of the states and actions from a reference point.
-- The number of time step of the mpc will greatly impact computation times. If an environment needs the model to plan too much ahead, the computations time might become too much to solve it in real-time. This can also be a problem when the dimensionality of the action space is too high. To have lower computation time, you can reduce the horizon length, but it might decrease the performances.
-- The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions. 
-- If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
-- The current implementation will not work for gym environments with discrete states or actions.
-- No guarantee is given for the time per iteration.
-- Actions must have an effect on the observation of the next observed step. Delays are not supported in the model. Observation must unequivocally describe the system states.
-- Sensitivity to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
-
+## Usage
 
 <a name="installation"/>
 
-## Installation
-
-<a name="dependencies"/>
-
-### Dependencies
-
+### Installation
+#### Dependencies
 numpy, gym, pytorch, gpytorch, matplotlib, scikit-learn, ffmpeg
+#### Install with anaconda
 
-<a name="install-with-anaconda"/>
-
-### Install with Anaconda (recommended)
 Download [anaconda](https://www.anaconda.com/products/individual)
-
-Open an anaconda prompt window
-
-You can then create and install the environment with:
-
-`conda env create -f environment.yml`
-
-And activate it with:
-
-`conda activate gp_rl_env`
-
-Depending on your platform, you may have to change the yml file to install Pytorch following the instructions [here](https://pytorch.org/get-started/locally/)
+Open an anaconda prompt window:
+```
+git clone https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
+cd Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
+conda env create -f environment.yml
+conda activate gp_rl_env
+python main.py
+```
 
 <a name="run"/>
 
-## Run
+### Run for your gym environment
 
-Once your virtual environment is activated, write: python main.py
+To run the script using your environment, you must first define it as a gym environment, 
+then create two json files inside the folder params that contains all the parameters relative to the control.
 
-All parameters are stored in two two json files.
-- The parameters of the main script are stored in parameters.json, which specifies which gym environment to use, the parameters relative to visualizations. The parameter number_tests_to_run specifies the number of runs to perform to compute the mean losses. If it is set to 1, the mean losses will not be computed.
+- The parameters of the main script are stored in parameters.json, which specifies:
+    - Which gym environment to use, 
+    - The parameters relative to visualizations. 
+    - The number of runs to perform for the computation of mean losses. 
+        If it is set to 1, the mean losses will not be computed.
 
 - For each gym environment, a json file containing the gym environment name contains all the parameters relative to this environment, and the control used.
 The syntax is parameters_"gym_env_name".json
 
-To use the model on a different gym environment, an other json file must be created, which contains the same structure and parameters, but with different values.
-
 The plots and animations will be saved in the folder "folder_save", with the following structure:
 folder_save => environment name => time and date of the run
 
-<a name="json-parameters"/>
-
-### Json parameters to be specified for each gym environment
-- hyperparameters_init: initial values of the hyperparameters of the gaussian processes
-    - noise_std: vector representing the standard deviation of the uncertainty of predictions of the gaussian processes at known points (dim=(number of states))
-    - lengthscale: matrix representing the lengthscales for each input, and for each gaussian process (dim=(number of states, number of input))
-    - scale: vector representing the scale of the gaussian processes (dim=(number of states)))
-
-- params_constraints: constraints on the hyperparameters of the gaussian processes 
-    - min_std_noise: minimum value of the parameter noise_std (dim=scalar)
-    - max_std_noise: maximum value of the parameter noise_std (dim=scalar)
-    - min_outputscale: minimum value of the outputscales (dim=scalar)
-    - max_outputscale: maximum value of the outputscales (dim=scalar)
-    - min_lengthscale: minimum value of the lengthscales (dim=scalar)
-    - max_lengthscale: maximum value of the lengthscales (dim=scalar)
-     
-- params_controller: parameters relative to the cost function and MPC
-    - target_state: value of the states to attain to minimize the cost (dim=(dimension of states))
-    - weights_target_state: weights of each state dimension in the cost function (dim=(dimension of states))
-    - weights_target_state_terminal_cost: weights of each state dimension in the terminal cost function, at the end of the prediction horizon (dim=(dimension of states))
-    - target_action: value of the actions to attain to minimize the cost (dim=(dimension of actions))
-    - weights_target_action: weights of each action dimension in the cost function (dim=(dimension of actions))
-    - s_observation: variance of the observations of states, if there is observation noise (dim=(dimension of states))
-    - len_horizon: length of the horizon used to find the optimal actions. The total horizon length in time steps = len_horizon * num_repeat_actions (dim=scalar)
-    - num_repeat_actions: number of time steps to repeat the planned actions
-    - exploration_factor: the value to be minimized is (sum of predicted cost - exploration_factor * sum of the predicted cost uncertainty). A higher value will lead to more exploration (dim=scalar) 
-    - limit_derivative_actions: if set to 1, the variation of the normalized actions will be limited, from time step to time step by the parameter max_derivative_actions_norm (dim=scalar)
-    - max_derivative_actions_norm: limitation on the variation of normalized actions from on control step to another if limit_derivative_actions is set to 1. (dim=(dimension of actions))
-    - clip_lower_bound_cost_to_0: if set to 1, the optimized cost (with exploration parameter) will be clipped to 0 if negative.
-    - compute_factorization_each_iteration: If set to 0, the factorization of the gaussian processes will only computed after each time the hyper parameters of the gaussian processes are trained, which means that new points in the GPs memory will not be used until the end of the next training process. This reduce iteration times if there are many points in the gaussian process memory but reduces performances.
-
-- params_constraints_states: 
-     - use_constraints: if set to 1, the constraints will be used, if set to 0, it will be ignored
-     - states_min: minimum allowed value of the states (dim=(number of states))
-     - states_max: maximum allowed value of the states (dim=(number of states))
-     - area_penalty_multiplier: At the moment, constraints on the states are added as a penalty in the predicted cost trajectory. The value of this penalty is the area of the predicted state distribution that violate the constraints. This penalty is multiplied by this parameter 
-     
-- params_train: parameters used for the training of the gaussian processes hyper parameters, done in a parallel process
-    - lr_train: learning rate
-    - n_iter_train: number of training iteration
-    - train_every_n_points: training will occur at constant time interval. This parameter set the frequency of training process in number of time steps
-    - clip_grad_value: maximum value of the gradient of the trained parameters, for more stability
-    - print_train: if set to 1, the values optimized will be printed during training
-    - step_print_train: if print_train is set to 1, this parameter specifies the frequency of printing during training
-     
-- params_init: 
-    - num_random_actions_init: number of inital random actions (one action is multiple time steps if num_repeat_actions is different than 1)
-     
-- params_actions_optimizer: parameters of the optimizer used to find the optimal actions by minimizing the lower bound of the predicted cost. See the scipy documentation: https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html?highlight=minimize Note: the jacobian is used for optimization, so the parameters eps is not used.
-     
-- params_memory: parameters relative to memory storage. Every point is not stored in memory. Either the error of the prediction must be above a threshold or the standard deviation of the prediction uncertainty must be above a threshold
-    - min_error_prediction_prop_for_storage: minimum prediction error for each of the predicted states (dim=(number of states))
-    - min_prediction_std_prop_for_storage: minimum predicted standard deviation for each of the predicted states (dim=(number of states))
-     
-- num_steps_env: total number of steps in the environment
- 
- <a name="issues"/>
- 
- ## Issues
- If you get the error: "ValueError: bad value(s) in fds_to_keep", 
- set the parameters save_plot and save_plot_model_3d to 0 in global_parameters.json. 
- The error is due to having multiple parallel processes running at the same time on some platforms.
+For more information about the parameters, see PARAMETERS.md
 
 <a name="resources"/>
 
@@ -245,14 +163,36 @@ folder_save => environment name => time and date of the run
 <a name="brief-explanation"/>
 
 ### Brief explanation of the method
-The approach uses a model to control the environment. This family of methods are called Model Predictive Control (MPC). At each interaction with the real environment, the optimal action is obtained through an iterative approach. The model is used to evaluate certain actions over a fixed time horizon by simulating the environment. This simulation is used several times with different actions at each interaction with the real world to find the optimal actions in the time horizon window. The first control of the time horizon is then used for the next action in the real world. In traditional control theory, the model is a mathematical model obtained from theory. Here, the model is a Gaussian process that learns from observed data. 
+The approach uses a model to control the environment. 
+This family of methods are called Model Predictive Control (MPC). 
+At each interaction with the real environment, the optimal action is obtained through an iterative approach. 
+The model is used to evaluate certain actions over a fixed time horizon by simulating the environment. 
+This simulation is used several times with different actions at each interaction with the real world to find the optimal actions in the time horizon window. 
+The first control of the time horizon is then used for the next action in the real world. 
+In traditional control theory, the model is a mathematical model obtained from theory. 
+Here, the model is a Gaussian process that learns from observed data. 
 
-Gaussian processes are used to predict the variation of states as a function of states and actions. The predictions have the form of a distribution, which also allows the uncertainty of these predictions. Gaussian processes are defined by a mean and covariance function, and store previous points (states(t), actions(t), (states(t+1) - states(t))) in memory. To compute new predictions, the covariance between the new points and the points stored in memory is calculated, which allows, with a little mathematics, to get the predicted distribution. Conceptually, Gaussian processes can be seen as if they were looking at adjacent points in memory to compute predictions at new points. Depending on the distance between the new point and the points stored in memory, the uncertainty will be greater or smaller. In our case, 
-for each state, one Gaussian process is used which has n (number of states) + m (number of actions) inputs, and 1 output used to predict the variation of that state.
+Gaussian processes are used to predict the change of states as a function of states and actions. 
+The predictions have the form of a distribution, which also allows the uncertainty of these predictions. 
+Gaussian processes are defined by a mean and covariance function, and store previous points (states(t), actions(t), (states(t+1) - states(t))) in memory. 
+To compute new predictions, the covariance between the new points and the points stored in memory is calculated, 
+which allows, with a little mathematics, to get the predicted distribution. 
+Conceptually, Gaussian processes can be seen as if they were looking at adjacent points in memory to compute predictions at new points. 
+Depending on the distance between the new point and the points stored in memory, the uncertainty will be greater or smaller. 
+In our case, for each state, one Gaussian process is used which has n (number of states) + m (number of actions) inputs, 
+and 1 output used to predict the variation of that state.
 
-One specificity of the paper is that for this method, uncertainties propagate during trajectory calculations which allows to calculate the uncertainty of the loss in the window of the simulation horizon. This makes it possible to explore more efficiently by rewarding states where the uncertainty of the loss is high. It can also be used to get a real-time idea of the model's certainty about the future. Uncertainty can also be used to impose security constraints. This can be done by prohibiting visits to states where the uncertainty is too high, by imposing constraints on the lower or upper limit of the state confidence interval. This method is already used for safe Bayesian optimization. For example, it has been used [to optimize UAV controllers to avoid crashes during optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
+One specificity of the paper is that for this method, 
+uncertainties propagate during trajectory calculations which allows to calculate the uncertainty of the loss in the window of the simulation horizon. 
+This makes it possible to explore more efficiently by rewarding states where the uncertainty of the loss is high. 
+It can also be used to get a real-time idea of the model's certainty about the future. 
+Uncertainty can also be used to impose security constraints. 
+This can be done by prohibiting visits to states where the uncertainty is too high by imposing constraints on the lower or upper limit of the state confidence interval. 
+This method is already used for safe Bayesian optimization. 
+For example, it has been used [to optimize UAV controllers to avoid crashes during optimization.](https://www.youtube.com/watch?v=GiqNQdzc5TI)
 
-This approach allows learning fast enough to enable online learning from scratch, which opens up many possibilities for Reinforcement Learning in new applications, with some more research. 
+This approach allows learning fast enough to enable online learning from scratch, 
+which opens up many possibilities for Reinforcement Learning in new applications with some more research. 
 
 <a name="why-is-this-paper-important"/>
 
@@ -265,13 +205,38 @@ With all the limitations that this method presents, it shows that for the applic
 
 This increased efficiency can be explained by different reasons, and open the search for algorithms with the same improvement in sample efficiency but without the limitations mentioned above.
 
-For example, the future predicted reward (or loss) is predicted as a distribution. By maximizing the upper confidence limit of rewards, future states with high reward uncertainty are encouraged, allowing for effective exploration.
+For example, the future predicted reward (or cost) is predicted as a distribution. By maximizing the upper confidence limit of rewards, future states with high reward uncertainty are encouraged, allowing for effective exploration.
 
 Maximizing future state uncertainty could also be used to explore environments without rewards.
 
 If future research removes the limitations of this method, this type of data efficiency could be used for real world applications where real-time learning is required and thus open many new applications for reinforcement learning.
 
 <a name="talks-tutorials"/>
+
+### Remarks
+
+<a name="differences"/>
+
+#### Implementation differences from the paper
+
+Compared to the implementation in the paper, the scripts have been designed to perform the control over a long time without any reset, which means :
+- The optimized function in the mpc is the lower confidence bound of the expected long-term cost to reward exploration and avoid getting stuck in a local minimum.
+- The environment is not reset, learning is done in one go. Thus, the hyper-parameters training can not be done between trials. The learning of the hyperparameters and the storage of the visualizations are performed in a parallel process at regular time intervals in order to minimize the computation time at each control iteration.
+- An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
+- The optimizer for actions is LBFGS
+
+<a name="limitations"/>
+
+#### Limitations
+
+- The cost function must be clearly defined as a squared distance function of the states and actions from a reference point.
+- The number of time step of the mpc will greatly impact computation times. If an environment needs the model to plan too much ahead, the computations time might become too much to solve it in real-time. This can also be a problem when the dimensionality of the action space is too high. To have lower computation time, you can reduce the horizon length, but it might decrease the performances.
+- The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions.
+- If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
+- The current implementation will not work for gym environments with discrete states or actions.
+- No guarantee is given for the time per iteration.
+- Actions must have an effect on the observation of the next observed step. Delays are not supported in the model. Observation must unequivocally describe the system states.
+- Sensitivity to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
 
 ### Talks/Tutorials
 
