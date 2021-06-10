@@ -223,13 +223,12 @@ which opens up many possibilities for Reinforcement Learning in new applications
 ### Why is this paper important?
 Currently, real-world applications of model-free reinforcement learning algorithms are limited due to the number of interactions they require with the environment.
 
-There is a debate within the reinforcement learning community about the use of model-based reinforcement learning algorithms to improve sample efficiency, but the extent to which it can improve sample efficiency is unknown.
+With all the limitations that this method presents, it shows that for the applications on which it can be used, the same results as for state-of-the-art model-free algorithms (to the extent of my knowledge) can be obtained with approximately 20 times less interaction with the environment.
 
-With all the limitations that this method presents, it shows that for the applications on which it can be used, the same learning as for state-of-the-art model-free algorithms (to the extent of my knowledge) can be done with 10 to 20 times less interaction with the environment for the tests I used.
+Understanding the reasons of this increased efficiency would open the search for algorithms with the same improvement in sample efficiency but without the limitations mentioned above.
 
-This increased efficiency can be explained by different reasons, and open the search for algorithms with the same improvement in sample efficiency but without the limitations mentioned above.
-
-For example, the future predicted reward (or cost) is predicted as a distribution. By maximizing the upper confidence limit of rewards, future states with high reward uncertainty are encouraged, allowing for effective exploration.
+For example, the future predicted rewards (or cost) are predicted as a distribution. 
+By maximizing the upper confidence bound of future rewards, future states with high reward uncertainty are encouraged, allowing for effective exploration.
 
 Maximizing future state uncertainty could also be used to explore environments without rewards.
 
