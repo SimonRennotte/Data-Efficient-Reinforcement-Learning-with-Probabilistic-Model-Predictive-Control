@@ -225,7 +225,7 @@ Currently, real-world applications of model-free reinforcement learning algorith
 
 With all the limitations that this method presents, it shows that for the applications on which it can be used, the same results as for state-of-the-art model-free algorithms (to the extent of my knowledge) can be obtained with approximately 20 times less interaction with the environment.
 
-Understanding the reasons of this increased efficiency would open the search for algorithms with the same improvement in sample efficiency but without the limitations mentioned above.
+Understanding the reasons of this increased efficiency would open the search for algorithms with the same improvement in sample efficiency but without the limitations of this method.
 
 For example, the future predicted rewards (or cost) are predicted as a distribution. 
 By maximizing the upper confidence bound of future rewards, future states with high reward uncertainty are encouraged, allowing for effective exploration.
