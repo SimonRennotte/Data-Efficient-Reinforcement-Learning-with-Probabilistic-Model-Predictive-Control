@@ -253,13 +253,12 @@ Compared to the implementation in the paper, the scripts have been designed to p
 #### Limitations
 
 - The cost function must be clearly defined as a squared distance function of the states and actions from a reference point.
-- The number of time step of the mpc will greatly impact computation times. If an environment needs the model to plan too much ahead, the computations time might become too much to solve it in real-time. This can also be a problem when the dimensionality of the action space is too high. To have lower computation time, you can reduce the horizon length, but it might decrease the performances.
+- The length of the prediction horizon of the mpc will impact computation times. This can be a problem when the dimensionality of the observation space and/or action space is also high.
 - The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions.
 - If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
 - The current implementation will not work for gym environments with discrete states or actions.
 - No guarantee is given for the time per iteration.
 - Actions must have an effect on the observation of the next observed step. Delays are not supported in the model. Observation must unequivocally describe the system states.
-- Sensitivity to observation noise: it will impact the memory of the gps and thus future predictions uncertainty.
 
 ### Talks/Tutorials
 

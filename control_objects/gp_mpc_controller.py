@@ -7,7 +7,7 @@ import gpytorch
 from scipy.optimize import minimize
 
 from control_objects.abstract_control_obj import BaseControllerObject
-from control_objects.utils import save_plot_model_3d_process, save_plot_2d, create_models
+from utils.utils import save_plot_model_3d_process, save_plot_2d, create_models
 
 # precision double tensor necessary for the gaussian processes predictions
 torch.set_default_tensor_type(torch.DoubleTensor)
@@ -535,7 +535,7 @@ class GpMpcController(BaseControllerObject):
 		self.states_var_pred = s_states_pred.detach()
 		self.costs_traj_var = costs_traj_var.detach()
 
-		return mean_cost_traj_lcb.item(), gradients_dcost_dactions[:, 0].detach().numpy()
+		return mean_cost_traj_lcb.item(), gradients_dcost_dactions.flatten().detach().numpy()
 
 	def compute_action(self, obs_mu, obs_var=None):
 		"""
@@ -654,9 +654,8 @@ class GpMpcController(BaseControllerObject):
 			else:
 				action_next = actions_norm[0]
 
-
 			actions_norm = torch.Tensor(actions_norm)
-			action = self.denorm_action(action_next[0])
+			action = self.denorm_action(action_next)
 
 			cost, cost_var = self.compute_cost(obs_mu_normed, obs_var_norm, actions_norm[0])
 			# states_denorm = self.states_mu_pred[1:] * \

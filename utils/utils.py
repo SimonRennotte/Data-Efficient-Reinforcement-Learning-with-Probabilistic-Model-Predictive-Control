@@ -15,7 +15,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsRegressor
 
-from .gp_models import ExactGPModelMonoTask
+from control_objects.gp_models import ExactGPModelMonoTask
 
 matplotlib.rc('font', size='6')
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
@@ -227,9 +227,10 @@ def init_visu_and_folders(env, num_steps, env_str, params_general, params_contro
 		os.makedirs(folder_save)
 
 	if params_general['save_render_env']:
-		if not os.path.exists(os.path.join('folder_save', env_str)):
-			os.makedirs(os.path.join('folder_save', env_str))
-		rec = VideoRecorder(env, path=os.path.join(folder_save, 'anim' + env_str + '.mp4'))
+		try:
+			rec = VideoRecorder(env, path=os.path.join(folder_save, 'anim' + env_str + '.mp4'))
+		except:
+			pass
 	else:
 		rec = None
 	return live_plot_obj, rec, folder_save
@@ -290,15 +291,16 @@ def plot_costs(costs, env_str):
 	plt.plot(indexes, mean_cost_runs, label='mean cost run')
 	plt.fill_between(indexes, mean_cost_runs - 2 * std_cost_runs, mean_cost_runs + 2 * std_cost_runs,
 		label='cost runs 2 std', alpha=0.6)
+	plt.grid()
 	plt.title('Cost of the different runs for env ' + env_str)
 	plt.ylabel('Cost')
 	plt.xlabel('Number of environment steps')
-	plt.savefig(os.path.join('folder_save', env_str, 'Cost_runs_' + env_str))
+	plt.savefig(os.path.join('../folder_save', env_str, 'Cost_runs_' + env_str))
 	plt.show()
 
 
 def draw_plots_2d(states, actions, costs, pred_info, num_repeat_actions=1, random_actions_init=0,
-		state_min=None, state_max=None, iter_ahead_show=3, fig=None, axes=None,
+		state_min_constraint=None, state_max_constraint=None, iter_ahead_show=3, fig=None, axes=None,
 		update_x_limit=True, mul_std_bounds=3):
 	idxs_x = np.arange(0, len(states))
 	pred_iters = np.array(pred_info['iteration'])
@@ -333,10 +335,10 @@ def draw_plots_2d(states, actions, costs, pred_info, num_repeat_actions=1, rando
 				color=plt.get_cmap('tab20').colors[2 * state_idx], alpha=ALPHA_CONFIDENCE_BOUNDS)
 		# label=str(num_iter_prediction_ahead_show * num_repeat_actions) + 'step_' + 'bounds_prediction' + str(
 		# 				state_idx)
-		if state_min is not None and state_max is not None:
-			axes[0].axhline(y=state_min[state_idx],
+		if state_min_constraint is not None and state_max_constraint is not None:
+			axes[0].axhline(y=state_min_constraint[state_idx],
 				color=plt.get_cmap('tab20').colors[2 * state_idx], linestyle='-.')
-			axes[0].axhline(y=state_max[state_idx],
+			axes[0].axhline(y=state_max_constraint[state_idx],
 				color=plt.get_cmap('tab20').colors[2 * state_idx], linestyle='-.')
 	# costs = np.array([element for element in pred_info['cost']])
 	axes[2].plot(idxs_x, costs, label='cost', color='k')
@@ -360,24 +362,31 @@ def draw_plots_2d(states, actions, costs, pred_info, num_repeat_actions=1, rando
 
 def save_plot_2d(states, actions, costs, pred_info, folder_save,
 		num_repeat_actions=1, random_actions_init=0,
-		state_min=None, state_max=None, iter_ahead_show=3, mul_std_bounds=3):
+		state_min_constraint=None, state_max_constraint=None,
+		iter_ahead_show=3, mul_std_bounds=3):
 	fig, axes = plt.subplots(nrows=3, figsize=(6, 5), sharex=True)
 	axes[0].set_title('Normed states and predictions')
 	axes[1].set_title('Normed actions')
 	axes[2].set_title('Cost and horizon cost')
 	plt.xlabel("time")
-	axes[0].set_ylim(0, 1.02)
+	max_state_plot = np.max([states.max(), 1.03])
+	min_state_plot = np.min([states.min(), -0.03])
+	axes[0].set_ylim(min_state_plot, max_state_plot)
 	axes[1].set_ylim(0, 1.02)
 	plt.tight_layout()
 	fig, axes = draw_plots_2d(states=states, actions=actions, costs=costs,
 							pred_info=pred_info, num_repeat_actions=num_repeat_actions,
 							random_actions_init=random_actions_init,
-							state_min=state_min, state_max=state_max,
+							state_min_constraint=state_min_constraint,
+							state_max_constraint=state_max_constraint,
 							iter_ahead_show=iter_ahead_show, fig=fig, axes=axes,
 							mul_std_bounds=mul_std_bounds)
 	axes[0].legend()
+	axes[0].grid()
 	axes[1].legend()
+	axes[1].grid()
 	axes[2].legend()
+	axes[2].grid()
 	hour = datetime.datetime.now().hour
 	minute = datetime.datetime.now().minute
 	second = datetime.datetime.now().second
@@ -395,9 +404,14 @@ def anim_plots_2d_p(queue, num_steps_total, step_pred, obs_space, action_space,
 	axes[1].set_title('Normed actions')
 	axes[2].set_title('Cost and horizon cost')
 	plt.xlabel("Env steps")
-	axes[0].set_ylim(-0.03, 1.03)
+	min_state = -0.03
+	max_state = 1.03
+	axes[0].set_ylim(min_state, max_state)
+	axes[0].grid()
 	axes[1].set_ylim(-0.03, 1.03)
+	axes[1].grid()
 	axes[2].set_xlim(0, num_steps_total)
+	axes[2].grid()
 	plt.tight_layout()
 
 	states = np.empty((num_steps_total, obs_space.shape[0]))
@@ -457,6 +471,20 @@ def anim_plots_2d_p(queue, num_steps_total, step_pred, obs_space, action_space,
 				states[num_pts_show] = obs_norm
 				actions[num_pts_show] = action_norm
 				costs[num_pts_show] = msg[2]
+
+				update_limits = False
+				min_state_actual = np.min(states[num_pts_show])
+				if min_state_actual < min_state:
+					min_state = min_state_actual
+					update_limits = True
+
+				max_state_actual = np.max(states[num_pts_show])
+				if max_state_actual > max_state:
+					max_state = max_state_actual
+					update_limits = True
+
+				if update_limits:
+					axes[0].set_ylim(min_state, max_state)
 
 				if len(msg) > 3:
 					mean_cost_pred[num_pts_show] = np.nan_to_num(msg[3], nan=-1, posinf=-1, neginf=-1)
@@ -593,7 +621,9 @@ class LivePlotSequential:
 		self.axes[1].set_title('Normed actions')
 		self.axes[2].set_title('Cost and horizon cost')
 		plt.xlabel("Env steps")
-		self.axes[0].set_ylim(-0.03, 1.03)
+		self.min_state = -0.03
+		self.max_state = 1.03
+		self.axes[0].set_ylim(self.min_state, self.max_state)
 		self.axes[1].set_ylim(-0.03, 1.03)
 		self.axes[2].set_xlim(0, num_steps_total)
 		plt.tight_layout()
@@ -644,8 +674,11 @@ class LivePlotSequential:
 		self.line_costs_pred = self.axes[2].plot([], [], label='predicted cost', color='k', linestyle='dashed')
 
 		self.axes[0].legend(fontsize=fontsize)
+		self.axes[0].grid()
 		self.axes[1].legend(fontsize=fontsize)
+		self.axes[1].grid()
 		self.axes[2].legend(fontsize=fontsize)
+		self.axes[2].grid()
 		plt.show(block=False)
 
 	def update(self, obs, action, cost, info_dict=None):
@@ -653,6 +686,21 @@ class LivePlotSequential:
 		action_norm = (action - self.min_action) / (self.max_action - self.min_action)
 		self.states[self.num_points_show] = obs_norm
 		self.costs[self.num_points_show] = cost
+
+		update_limits = False
+		min_state_actual = np.min(obs_norm)
+		if min_state_actual < self.min_state:
+			self.min_state = min_state_actual
+			update_limits = True
+
+		max_state_actual = np.max(obs_norm)
+		if max_state_actual > self.max_state:
+			self.max_state = max_state_actual
+			update_limits = True
+
+		if update_limits:
+			self.axes[0].set_ylim(self.min_state, self.max_state)
+
 		idxs = np.arange(0, (self.num_points_show + 1))
 		for idx_axes in range(len(self.axes)):
 			self.axes[idx_axes].collections.clear()

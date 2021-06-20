@@ -1,6 +1,7 @@
 
 ### Json parameters to be specified for each gym environment
-It is important for the selection of parameters that the input to the gaussian processes are normalized between 0 and 1.
+It is important for the selection of parameters to note that the input to the gaussian processes 
+and the points in memory are normalized between 0 and 1.
 Also, the gaussian processes predict changes in states and not states directly.
 
 - gp_init: initial values of the hyperparameters of the gaussian processes

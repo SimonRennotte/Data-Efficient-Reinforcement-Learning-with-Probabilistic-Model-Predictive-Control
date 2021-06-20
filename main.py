@@ -6,10 +6,14 @@ import gym
 import json
 
 from control_objects.gp_mpc_controller import GpMpcController
-from control_objects.utils import init_control, init_visu_and_folders, plot_costs, close_run
+from utils.utils import init_control, init_visu_and_folders, plot_costs, close_run
+from utils.env_example import CustomEnv
 
 
 def main():
+	# choose the configuration file to load the corresponding env
+	# open(os.path.join('params', 'main_parameters_mountain_car.json'))
+	# open(os.path.join('params', 'main_parameters_my_env.json'))
 	with open(os.path.join('params', 'main_parameters_pendulum.json')) as json_data_file:
 		params_general = json.load(json_data_file)
 
@@ -28,12 +32,16 @@ def main():
 
 	costs_runs = np.ones((num_tests, num_steps))
 	for idx_test in range(num_tests):
-		try:
-			env = gym.make(params_general['env_to_control'])
-		except:
-			raise ValueError('Could not find env ' + params_general['env_to_control'] +
-							 '. Check the name and try again.')
-		env_str = env.env.spec.entry_point.replace('-', '_').replace(':', '_').replace('.', '_')
+		if params_general['env_to_control'] == 'my_env':
+			env = CustomEnv()
+			env_str = 'MyEnv'
+		else:
+			try:
+				env = gym.make(params_general['env_to_control'])
+			except:
+				raise ValueError('Could not find env ' + params_general['env_to_control'] +
+								 '. Check the name and try again.')
+			env_str = env.env.spec.entry_point.replace('-', '_').replace(':', '_').replace('.', '_')
 
 		live_plot_obj, rec, folder_save = init_visu_and_folders(env=env, num_steps=num_steps, env_str=env_str,
 										params_general=params_general, params_controller_dict=params_controller_dict)
