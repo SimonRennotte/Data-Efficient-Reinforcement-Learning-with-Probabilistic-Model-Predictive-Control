@@ -15,8 +15,6 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 
 class GpMpcController(BaseControllerObject):
 	def __init__(self, observation_space, action_space, params_dict, folder_save):
-		BaseControllerObject.__init__(self, observation_space, action_space)
-
 		params_dict = self.preprocess_params(params_dict)
 		self.weight_matrix_cost = \
 			torch.block_diag(
@@ -40,6 +38,10 @@ class GpMpcController(BaseControllerObject):
 		self.training_frequency = params_dict['train']['training_frequency']
 		self.print_train = params_dict['train']['print_train']
 		self.step_print_train = params_dict['train']['step_print_train']
+
+		self.include_time_gp = params_dict['controller']['include_time_gp']
+
+		BaseControllerObject.__init__(self, observation_space, action_space, self.include_time_gp)
 
 		self.error_pred_memory = params_dict['memory']['min_error_prediction_state_for_memory']
 		self.std_pred_memory = params_dict['memory']['min_prediction_state_std_for_memory']
@@ -79,7 +81,7 @@ class GpMpcController(BaseControllerObject):
 			self.actions_pred_previous_iter = np.random.uniform(low=0, high=1,
 				size=(self.len_horizon, self.num_actions))
 
-		self.models = create_models(train_inputs=None, train_targets=None, hyperparameters_value=params_dict['gp_init'],
+		self.models = create_models(train_inputs=None, train_targets=None, params=params_dict['gp_init'],
 			constraints_gp=self.gp_constraints, num_models=self.obs_space.shape[0], num_inputs=self.num_inputs)
 		for idx_model in range(len(self.models)):
 			self.models[idx_model].eval()
@@ -88,7 +90,9 @@ class GpMpcController(BaseControllerObject):
 		self.ctx = multiprocessing.get_context('spawn')
 		self.queue_train = self.ctx.Queue()
 
-		self.n_iter = 0
+		self.n_iter_ctrl = 0
+		self.n_iter_obs = 0
+
 		self.info_iters = {}
 		self.idxs_mem_gp = []
 
@@ -114,13 +118,62 @@ class GpMpcController(BaseControllerObject):
 		params_dict['constraints_states']['state_min'] = torch.Tensor(params_dict['constraints_states']['state_min'])
 		params_dict['constraints_states']['state_max'] = torch.Tensor(params_dict['constraints_states']['state_max'])
 		for key in params_dict['gp_init']:
-			params_dict['gp_init'][key] = torch.Tensor(params_dict['gp_init'][key])
+			if type(params_dict['gp_init'][key]) != float and type(params_dict['gp_init'][key]) != int:
+				params_dict['gp_init'][key] = torch.Tensor(params_dict['gp_init'][key])
+			
+		for key in params_dict['gp_constraints']:
+			if type(params_dict['gp_constraints'][key]) != float and type(params_dict['gp_constraints'][key]) != int:
+				params_dict['gp_constraints'][key] = torch.Tensor(params_dict['gp_constraints'][key])
+			
 		params_dict['memory']['min_error_prediction_state_for_memory'] = \
 			torch.Tensor(params_dict['memory']['min_error_prediction_state_for_memory'])
 		params_dict['memory']['min_prediction_state_std_for_memory'] = \
 			torch.Tensor(params_dict['memory']['min_prediction_state_std_for_memory'])
 
 		params_dict['controller']['obs_var_norm'] = torch.Tensor(params_dict['controller']['obs_var_norm'])
+
+		if params_dict['controller']['include_time_gp']:
+			num_models = len(params_dict['controller']['target_state_norm'])
+			num_inputs = num_models + len(params_dict['controller']['target_action_norm']) + 1
+			max_lengthscale_time = params_dict['gp_constraints']['max_lengthscale_time']
+			min_lengthscale_time = params_dict['gp_constraints']['min_lengthscale_time']
+			init_lengthscale_time = min_lengthscale_time + (max_lengthscale_time - min_lengthscale_time) / 2
+
+			min_lengthscales = torch.empty((num_models, num_inputs))
+			if type(params_dict['gp_constraints']['min_lengthscale']) == float or \
+					type(params_dict['gp_constraints']['min_lengthscale']) == int or \
+					params_dict['gp_constraints']['min_lengthscale'].dim() != 1:
+				min_lengthscales[:, :-1] = params_dict['gp_constraints']['min_lengthscale']
+				min_lengthscales[:, -1] = min_lengthscale_time
+			else:
+				min_lengthscales[:, :-1] = params_dict['gp_constraints']['min_lengthscale'][None].t().repeat((1, num_inputs - 1))
+				min_lengthscales[:, -1] = min_lengthscale_time
+			params_dict['gp_constraints']['min_lengthscale'] = min_lengthscales
+	
+			max_lengthscales = torch.empty((num_models, num_inputs))
+			if type(params_dict['gp_constraints']['max_lengthscale']) == float or \
+					type(params_dict['gp_constraints']['max_lengthscale']) == int or \
+					params_dict['gp_constraints']['max_lengthscale'].dim() != 1:
+				max_lengthscales[:, :-1] = params_dict['gp_constraints']['max_lengthscale']
+				max_lengthscales[:, -1] = max_lengthscale_time
+			else:
+				max_lengthscales[:, :-1] = params_dict['gp_constraints']['max_lengthscale'][None].t().repeat((1, num_inputs - 1))
+				max_lengthscales[:, -1] = max_lengthscale_time
+			params_dict['gp_constraints']['max_lengthscale'] = max_lengthscales
+			# if params_dict['gp_init'] is values exported from already defined gps,
+			# there is no need to add dim for time
+			if type(params_dict['gp_init']) == dict:
+				lengthscales = torch.empty((num_models, num_inputs))
+				if type(params_dict['gp_init']['base_kernel.lengthscale']) == float or \
+						type(params_dict['gp_init']['base_kernel.lengthscale']) == int or \
+						params_dict['gp_init']['base_kernel.lengthscale'].dim() != 1:
+					lengthscales[:, :-1] = params_dict['gp_init']['base_kernel.lengthscale']
+					lengthscales[:, -1] = init_lengthscale_time
+				else:
+					lengthscales[:, :-1] = params_dict['gp_init']['base_kernel.lengthscale'][None].t().repeat(
+						(1, num_inputs - 1))
+					lengthscales[:, -1] = init_lengthscale_time
+				params_dict['gp_init']['base_kernel.lengthscale'] = lengthscales
 		return params_dict
 
 	def to_normed_obs_tensor(self, obs):
@@ -441,12 +494,15 @@ class GpMpcController(BaseControllerObject):
 		states_mu_pred[0] = obs_mu
 		states_var_pred[0] = obs_var
 		state_dim = obs_mu.shape[0]
-		input_dim = state_dim + actions.shape[1]
 		# Input of predict_next_state_change is not a state, but the concatenation of state and action
 		for idx_time in range(1, self.len_horizon + 1):
-			input_var = torch.zeros((input_dim, input_dim))
+			input_var = torch.zeros((self.num_inputs, self.num_inputs))
 			input_var[:state_dim, :state_dim] = states_var_pred[idx_time - 1]
-			input_mean = torch.cat((states_mu_pred[idx_time - 1], actions[idx_time - 1]), axis=0)
+			input_mean = torch.empty((self.num_inputs,))
+			input_mean[:self.num_states] = states_mu_pred[idx_time - 1]
+			input_mean[self.num_states:(self.num_states + self.num_actions)] = actions[idx_time - 1]
+			if self.include_time_gp:
+				input_mean[-1] = self.n_iter_obs + idx_time - 1
 			state_change, state_change_var, v = self.predict_next_state_change(
 														input_mean, input_var, iK, beta)
 			# use torch.clamp(states_mu_pred[idx_time], 0, 1) ?
@@ -662,7 +718,7 @@ class GpMpcController(BaseControllerObject):
 			# (self.observation_space.high - self.observation_space.low) + self.observation_space.low
 			# states_std_denorm = states_std_pred * (self.observation_space.high - self.observation_space.low)
 			states_std_pred = torch.diagonal(self.states_var_pred, dim1=-2, dim2=-1).sqrt()
-			info_dict = {'iteration': self.n_iter,
+			info_dict = {'iteration': self.n_iter_ctrl,
 						'state': self.mu_states_pred[0],
 						'predicted states': self.mu_states_pred[1:],
 						'predicted states std': states_std_pred[1:],
@@ -678,7 +734,7 @@ class GpMpcController(BaseControllerObject):
 					self.info_iters[key] = [info_dict[key]]
 				else:
 					self.info_iters[key].append(info_dict[key])
-			self.n_iter += self.num_repeat_actions
+			self.n_iter_ctrl += self.num_repeat_actions
 			return action, info_dict
 
 	def add_memory(self, obs, action, obs_new, reward, check_storage=True,
@@ -723,9 +779,13 @@ class GpMpcController(BaseControllerObject):
 			self.y = torch.cat(self.y, torch.empty(self.points_add_mem_when_full, self.y.shape[1]))
 			self.rewards = torch.cat(self.rewards, torch.empty(self.points_add_mem_when_full))
 
-		self.x[self.len_mem] = torch.cat((obs_norm, action_norm))
+		self.x[self.len_mem, :(obs_norm.shape[0] + action_norm.shape[0])] = \
+							torch.cat((obs_norm, action_norm))[None]
 		self.y[self.len_mem] = obs_new_norm - obs_norm
 		self.rewards[self.len_mem] = reward
+
+		if self.include_time_gp:
+			self.x[self.len_mem, -1] = self.n_iter_obs
 
 		store_gp_mem = True
 		if check_storage:
@@ -740,6 +800,7 @@ class GpMpcController(BaseControllerObject):
 			self.idxs_mem_gp.append(self.len_mem)
 
 		self.len_mem += 1
+		self.n_iter_obs += 1
 
 		if self.len_mem % self.training_frequency == 0 and \
 				not ('p_train' in self.__dict__ and not self.p_train._closed):
@@ -851,9 +912,7 @@ class GpMpcController(BaseControllerObject):
 			models[model_idx].covar_module.base_kernel.lengthscale = \
 				models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.lower_bound + \
 				torch.rand(models[model_idx].covar_module.base_kernel.lengthscale.shape) * \
-				(torch.min(torch.stack([torch.Tensor(
-					[models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.upper_bound]),
-					torch.Tensor([0.5])])) - \
+				(models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.upper_bound - \
 				 models[model_idx].covar_module.base_kernel.raw_lengthscale_constraint.lower_bound)
 
 			models[model_idx].likelihood.noise = \

@@ -16,10 +16,10 @@ class CustomEnv(gym.Env):
 		Params are ranges because they are chosen at random between the two values provided. """
 	metadata = {'render.modes': []}
 
-	def __init__(self, dt=1, s_range=(10, 20), fi_range=(0.2, 0.4), ci_range=(0, 0.2),
-						cr_range=(0.4, 0.9), noise_l_prop_range=(1e-5, 3e-3),
-						noise_co_prop_range=(1e-5, 3e-3), sp_l_range=(0.2, 0.8),
-						sp_co_range=(0.2, 0.4), change_params=False, period_change=50):
+	def __init__(self, dt=1, s_range=(9, 11), fi_range=(0.2, 0.6), ci_range=(0, 0.2),
+						cr_range=(0.5, 1), noise_l_prop_range=(1e-5, 1e-3),
+						noise_co_prop_range=(1e-5, 1e-3), sp_l_range=(0.2, 0.8),
+						sp_co_range=(0.2, 0.4), change_params=True, period_change=50):
 		super(CustomEnv, self).__init__()
 		# Definitions for gym env: action and observation space
 		# They must be gym.spaces objects

@@ -16,7 +16,9 @@ Also, the gaussian processes predict changes in states and not states directly.
     - max_outputscale: maximum value of the outputscales (dim=scalar)
     - min_lengthscale: minimum value of the lengthscales (dim=scalar)
     - max_lengthscale: maximum value of the lengthscales (dim=scalar)
-
+    - min_lengthscale_time: minimum value of the lengthscale for the time dimension when include_time_gp is set to True
+    - max_lengthscale_time: maximum value of the lengthscale for the time dimension when include_time_gp is set to True
+    
 - controller: parameters relative to the cost function and MPC
     - target_state_norm: value of the normed states to attain to minimize the cost (dim=(dimension of states))
     - weight_state: weights of each state dimension in the cost function (dim=(dimension of states))
@@ -30,7 +32,9 @@ Also, the gaussian processes predict changes in states and not states directly.
     - limit_action_change: if set to true, the variation of the normalized actions will be limited, from time step to time step by the parameter max_derivative_actions_norm (dim=scalar)
     - max_change_action_norm: limitation on the variation of normalized actions from on control step to another if limit_derivative_actions is set to 1. (dim=(dimension of actions))
     - clip_lower_bound_cost_to_0: if set to true, the optimized cost (with exploration parameter) will be clipped to 0 if negative.
-
+    - include_time_gp: if set to True, the time of the observations will also be used in the gaussian process models. 
+        It can be usefull when the environment changes over time. It gives the flexibility to the models to give more importance to recent points vs older points.
+    
 - params_constraints_states:
      - use_constraints: if set to true, the constraints will be used, if set to 0, it will be ignored
      - state_min: minimum allowed value of the states (dim=(number of states))

@@ -27,7 +27,7 @@ MEAN_PRED_COST_INIT = 1
 STD_MEAN_PRED_COST_INIT = 10
 
 
-def create_models(train_inputs, train_targets, hyperparameters_value, constraints_gp, num_models=None, num_inputs=None):
+def create_models(train_inputs, train_targets, params, constraints_gp, num_models=None, num_inputs=None):
 	"""
 	Define gaussian process models used for predicting state transition,
 	using constraints and init values for (outputscale, noise, lengthscale).
@@ -36,10 +36,10 @@ def create_models(train_inputs, train_targets, hyperparameters_value, constraint
 		train_inputs (torch.Tensor or None): Input values in the memory of the gps
 		train_targets (torch.Tensor or None): target values in the memory of the gps.
 												Represent the change in state values
-		hyperparameters_value (dict or list of dict): Dict type is used to create the models
-														with init values from the json file.
-														List of dict type is used to create the models
-														with exported parameters, such as in the parallel training process.
+		params (dict or list of dict): Value of the hyper-parameters of the gaussian processes.
+										Dict type is used to create the models with init values from the json file.
+										List of dict type is used to create the models
+													with exported parameters, such as in the parallel training process.
 		constraints_gp (dict): See the ReadMe about parameters for information about keys
 		num_models (int or None): Must be provided when train_inputs or train_targets are None.
 									The number of models should be equal to the dimension of state,
@@ -48,6 +48,11 @@ def create_models(train_inputs, train_targets, hyperparameters_value, constraint
 		num_inputs (int or None): Must be provided when train_inputs or train_targets are None.
 									The number of inputs should be equal to the sum of the dimension of state
 									and dimension of action. Default=None
+		include_time (bool): If True, gp will have one additional input corresponding to the time of the observation.
+								This is usefull if the env change with time,
+								as more recent points will be trusted more than past points
+								(time closer to the point to make inference at).
+								It is to be specified only if
 
 	Returns:
 		models (list of gpytorch.models.ExactGP): models containing the parameters, memory,
@@ -66,11 +71,13 @@ def create_models(train_inputs, train_targets, hyperparameters_value, constraint
 	for idx_model in range(num_models):
 		if constraints_gp is not None:
 			if "min_std_noise" in constraints_gp.keys():
-				if type(constraints_gp['min_std_noise']) == list:
+				if type(constraints_gp['min_std_noise']) != float and \
+						type(constraints_gp['min_std_noise']) != int:
 					min_var_noise = np.power(constraints_gp['min_std_noise'][idx_model], 2)
 				else:
 					min_var_noise = np.power(constraints_gp['min_std_noise'], 2)
-				if type(constraints_gp['max_std_noise']) == list:
+				if type(constraints_gp['max_std_noise']) != float and \
+						type(constraints_gp['max_std_noise']) != int:
 					max_var_noise = np.power(constraints_gp['max_std_noise'][idx_model], 2)
 				else:
 					max_var_noise = np.power(constraints_gp['max_std_noise'], 2)
@@ -78,12 +85,14 @@ def create_models(train_inputs, train_targets, hyperparameters_value, constraint
 					gpytorch.constraints.Interval(lower_bound=min_var_noise, upper_bound=max_var_noise))
 
 			if "min_outputscale" in constraints_gp.keys():
-				if type(constraints_gp['min_outputscale']) == list:
+				if type(constraints_gp['min_outputscale']) != float and \
+						type(constraints_gp['min_outputscale']) != int:
 					min_outputscale = constraints_gp['min_outputscale'][idx_model]
 				else:
 					min_outputscale = constraints_gp['min_outputscale']
 
-				if type(constraints_gp['max_outputscale']) == list:
+				if type(constraints_gp['max_outputscale']) != float and \
+						type(constraints_gp['max_outputscale']) != int:
 					max_outputscale = constraints_gp['max_outputscale'][idx_model]
 				else:
 					max_outputscale = constraints_gp['max_outputscale']
@@ -91,28 +100,28 @@ def create_models(train_inputs, train_targets, hyperparameters_value, constraint
 					gpytorch.constraints.Interval(lower_bound=min_outputscale, upper_bound=max_outputscale))
 
 			if "min_lengthscale" in constraints_gp.keys():
-				if type(constraints_gp['min_lengthscale']) == list:
-					min_lengthscale = constraints_gp['min_lengthscale'][idx_model]
-				else:
+				if type(constraints_gp['min_lengthscale']) == float or type(constraints_gp['min_lengthscale']) == int:
 					min_lengthscale = constraints_gp['min_lengthscale']
-				if type(constraints_gp['max_lengthscale']) == list:
-					max_lengthscale = constraints_gp['max_lengthscale'][idx_model]
 				else:
+					min_lengthscale = constraints_gp['min_lengthscale'][idx_model]
+				if type(constraints_gp['min_lengthscale']) == float or type(constraints_gp['min_lengthscale']) == int:
 					max_lengthscale = constraints_gp['max_lengthscale']
+				else:
+					max_lengthscale = constraints_gp['max_lengthscale'][idx_model]
 				models[idx_model].covar_module.base_kernel.register_constraint("raw_lengthscale",
 					gpytorch.constraints.Interval(lower_bound=min_lengthscale, upper_bound=max_lengthscale))
 		# load parameters
 		# dict type is used when initializing the models from the json config file
 		# list type is used when initializing the models in the parallel training process
 		# using the exported parameters
-		if type(hyperparameters_value) == dict:
-			hypers = {'base_kernel.lengthscale': hyperparameters_value['base_kernel.lengthscale'][idx_model],
-				'outputscale': hyperparameters_value['outputscale'][idx_model]}
-			hypers_likelihood = {'noise_covar.noise': hyperparameters_value['noise_covar.noise'][idx_model]}
+		if type(params) == dict:
+			hypers = {'base_kernel.lengthscale': params['base_kernel.lengthscale'][idx_model],
+				'outputscale': params['outputscale'][idx_model]}
+			hypers_likelihood = {'noise_covar.noise': params['noise_covar.noise'][idx_model]}
 			models[idx_model].likelihood.initialize(**hypers_likelihood)
 			models[idx_model].covar_module.initialize(**hypers)
-		elif type(hyperparameters_value) == list:
-			models[idx_model].load_state_dict(hyperparameters_value[idx_model])
+		elif type(params) == list:
+			models[idx_model].load_state_dict(params[idx_model])
 	return models
 
 
@@ -792,29 +801,11 @@ def save_plot_model_3d_process(inputs, targets, parameters, constraints_gp, fold
 		num_models = len(targets[0])
 		idxs_outside_gp_memory = [
 			np.delete(np.arange(len(inputs)), idxs_in_gp_memory[idx_model]) for idx_model in range(num_models)]
-		models = [ExactGPModelMonoTask(inputs[idxs_in_gp_memory[idx_model]],
-			targets[[idxs_in_gp_memory[idx_model]], idx_model], num_input_model) for idx_model in range(num_models)]
-		targets = targets.numpy()
 
-		for idx_model in range(num_models):
-			# register constraints on parameters
-			if "min_std_noise" in constraints_gp.keys():
-				models[idx_model].likelihood.noise_covar.register_constraint("raw_noise",
-					gpytorch.constraints.Interval(lower_bound=np.power(constraints_gp['min_std_noise'], 2),
-						upper_bound=np.power(constraints_gp['max_std_noise'], 2)))
-			if "min_outputscale" in constraints_gp.keys():
-				models[idx_model].covar_module.register_constraint("raw_outputscale",
-					gpytorch.constraints.Interval(
-						lower_bound=constraints_gp['min_outputscale'],
-						upper_bound=constraints_gp['max_outputscale']))
-			if "min_lengthscale" in constraints_gp.keys():
-				models[idx_model].covar_module.base_kernel.register_constraint("raw_lengthscale",
-					gpytorch.constraints.Interval(
-						lower_bound=constraints_gp['min_lengthscale'],
-						upper_bound=constraints_gp['max_lengthscale']))
-			# load parameters
-			models[idx_model].load_state_dict(parameters[idx_model])
+		models = create_models(inputs, targets, parameters, constraints_gp)
+		for idx_model in range(len(models)):
 			models[idx_model].eval()
+		targets = targets.numpy()
 
 		num_figures = int(num_input_model / total_col_max + 0.5)
 		figs = []

@@ -245,8 +245,10 @@ If future research removes the limitations of this method, this type of data eff
 Compared to the implementation in the paper, the scripts have been designed to perform the control over a long time without any reset, which means :
 - The optimized function in the mpc is the lower confidence bound of the expected long-term cost to reward exploration and avoid getting stuck in a local minimum.
 - The environment is not reset, learning is done in one go. Thus, the hyper-parameters training can not be done between trials. The learning of the hyperparameters and the storage of the visualizations are performed in a parallel process at regular time intervals in order to minimize the computation time at each control iteration.
-- An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
 - The optimizer for actions is LBFGS
+- An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
+- An option has been added to allow to include the time of observation to the gaussian process models. 
+    This can be useful when the environment changes over time, as the model will learn to rely on more recent points vs older points in memory.
 
 <a name="limitations"/>
 
