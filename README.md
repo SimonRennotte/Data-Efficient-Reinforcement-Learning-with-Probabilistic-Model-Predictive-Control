@@ -165,6 +165,7 @@ python main.py
 
 To run the script using your environment, you must first define it as a gym environment, 
 then create two json files inside the folder params that contains all the parameters relative to the control.
+For an example of such definition, you can look at the custom env defined in the file utils/env_example
 
 - The parameters of the main script are stored in main_parameters_env.json, which specifies:
     - Which gym environment to use, 
@@ -256,7 +257,7 @@ Compared to the implementation in the paper, the scripts have been designed to p
 
 - The cost function must be clearly defined as a squared distance function of the states and actions from a reference point.
 - The length of the prediction horizon of the mpc will impact computation times. This can be a problem when the dimensionality of the observation space and/or action space is also high.
-- The dimension of the input and output of the gaussian process must stay low (below 20 approximately), which limits application to cases with low dimensionality of the states and actions.
+- The dimension of the input and output of the gaussian process must stay low, which limits application to cases with low dimensionality of the states and actions.
 - If too much points are stored in the memory of the gaussian process, the computation times might become too high per iteration.
 - The current implementation will not work for gym environments with discrete states or actions.
 - No guarantee is given for the time per iteration.
