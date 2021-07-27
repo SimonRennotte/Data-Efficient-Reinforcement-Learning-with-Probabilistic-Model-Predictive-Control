@@ -7,19 +7,19 @@
 	"gp_constraints": {
 		"min_std_noise": 1e-3, "max_std_noise": 3e-1, "min_outputscale":  1e-5,
 		"max_outputscale": 0.95, "min_lengthscale":  4e-5, "max_lengthscale": 25.0,
-		"min_lengthscale_time": 5, "max_lengthscale_time": 50
+		"min_lengthscale_time": 5, "max_lengthscale_time": 10000
 	},
 	"controller": {
-		"target_state_norm": [0.2, 0.2], "weight_state": [0.5, 0.5],
-		"weight_state_terminal": [5, 5],
-		"target_action_norm": [0, 0], "weight_action": [0, 0.001],
-		"obs_var_norm": [1e-6, 1e-6], "len_horizon": 15, "exploration_factor": 0.01,
-		"limit_action_change": false, "max_change_action_norm": [0.05],
+		"target_state_norm": [0.5, 0.2], "weight_state": [0.05, 1],
+		"weight_state_terminal": [0.1, 5],
+		"target_action_norm": [0, 0], "weight_action": [0, 0.01],
+		"obs_var_norm": [1e-6, 1e-6], "len_horizon": 5, "exploration_factor": 0.01,
+		"limit_action_change": false, "max_change_action_norm": [0.1, 0.1],
 		"num_repeat_actions": 3, "clip_lower_bound_cost_to_0": false,
 		"include_time_gp": true
 	},
 	"constraints_states": {
-		"use_constraints": true, "state_min": [0.05, -0.1], "state_max":  [0.95, 1.1],
+		"use_constraints": true, "state_min": [0.15, -0.1], "state_max":  [0.85, 1.1],
 		"area_multiplier": 3
 	},
 	"train": {

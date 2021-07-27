@@ -1,7 +1,7 @@
 {
 	"env_to_control":  "MountainCarContinuous-v0", "render_env": true, "verbose":  true,
 	"render_live_plots_2d": true,
-	"save_plots_2d":  true, "save_plots_model_3d":  true,
+	"save_plots_2d":  false, "save_plots_model_3d":  false,
 	"save_render_env": true, "freq_iter_save_plots":  50,
 	"number_tests_to_run": 1, "run_live_graph_parallel_process": true,
 	"num_steps_env": 400, "random_actions_init":  30

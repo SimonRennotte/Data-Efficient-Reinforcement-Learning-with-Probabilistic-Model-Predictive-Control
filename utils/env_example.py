@@ -91,7 +91,7 @@ class CustomEnv(gym.Env):
 
 		return self.get_obs(), reward, done, info
 
-	def reset(self, min_prop=0.1, max_prop=0.9):
+	def reset(self, min_prop=0.3, max_prop=0.7):
 		# Reset the state of the environment to an initial state
 		self.iter = 0
 		ranges = (self.observation_space.high - self.observation_space.low)
