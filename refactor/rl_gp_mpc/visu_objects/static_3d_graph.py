@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsRegressor
 import numpy as np
 
-from rl_gp_mpc.utils.utils import create_models
+from rl_gp_mpc.control_objects.models.gp_model import create_models
 
 PROP_EXTEND_DOMAIN = 1
 N_TICKS = 150

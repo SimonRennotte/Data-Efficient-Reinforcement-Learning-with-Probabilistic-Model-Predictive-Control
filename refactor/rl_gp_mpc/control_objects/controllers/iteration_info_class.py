@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 class IterationInformation:
 	def __init__(self,
@@ -27,3 +28,14 @@ class IterationInformation:
 		self.mean_predicted_cost=mean_predicted_cost
 		self.mean_predicted_cost_std=mean_predicted_cost_std
 		self.lower_bound_mean_predicted_cost=lower_bound_mean_predicted_cost
+
+	def __str__(self):
+		iter_info_dict = self.__dict__
+		str_rep = "\n"
+		for key, item in iter_info_dict.items():
+			if key in ['predicted_states', 'predicted_states_std']:
+				continue
+			if isinstance(item, np.ndarray) or isinstance(item, torch.Tensor):
+				item = item.tolist()
+			str_rep += f"{key}: {item}\n"
+		return str_rep

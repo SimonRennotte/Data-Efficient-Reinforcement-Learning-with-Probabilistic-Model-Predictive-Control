@@ -14,6 +14,7 @@ class RewardConfig:
 		state_min=[-0.1, 0.05, 0.05], 
 		state_max=[1.1, 0.95, 0.925], 
 		area_multiplier=1, 
+		clip_lower_bound_cost_to_0=False
 	):
 		self.target_state_norm = target_state_norm
 		self.weight_state = weight_state
@@ -26,6 +27,8 @@ class RewardConfig:
 		self.state_min=state_min
 		self.state_max=state_max 
 		self.area_multiplier=area_multiplier 
+
+		self.clip_lower_bound_cost_to_0 = clip_lower_bound_cost_to_0
 		# Computed after init
 		self.target_state_action_norm = None
 		self.weight_matrix_cost = None

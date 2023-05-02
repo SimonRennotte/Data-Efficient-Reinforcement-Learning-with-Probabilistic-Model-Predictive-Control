@@ -1,14 +1,14 @@
-import datetime
 import os
+import multiprocessing
 
 import numpy as np
 import matplotlib
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
 from rl_gp_mpc.config_classes.visu_config import VisuConfig
-from rl_gp_mpc.config_classes.config import Config
-from rl_gp_mpc.control_objects.utils.iteration_info_class import IterationInformation
-from rl_gp_mpc.control_objects.controller import GpMpcController
+from rl_gp_mpc.config_classes.total_config import Config
+from rl_gp_mpc.control_objects.controllers.iteration_info_class import IterationInformation
+from rl_gp_mpc.control_objects.controllers.gp_mpc_controller import GpMpcController
 
 from .utils import get_env_name, create_folder_save
 from .static_3d_graph import save_plot_model_3d_process
@@ -27,9 +27,10 @@ STD_MEAN_PRED_COST_INIT = 10
 
 
 class ControlVisualizations:
-    def __init__(self, env, num_steps:int, control_config: Config, visu_config: VisuConfig):
+    def __init__(self, env, num_steps:int, control_config: Config, visu_config: VisuConfig, num_repeat_actions:int):
         self.control_config = control_config
         self.visu_config = visu_config
+        self.num_repeat_actions = num_repeat_actions
 
         self.observations = []
         self.actions = []
@@ -53,6 +54,8 @@ class ControlVisualizations:
         if self.visu_config.save_render_env:
             self.init_env_visu(self.env_str)
 
+        self.ctx = multiprocessing.get_context('spawn')
+
     def update(self, obs:np.ndarray, action:np.ndarray, cost:float, iter_info:IterationInformation=None):
         self.observations.append(obs)
         self.actions.append(action)
@@ -71,22 +74,22 @@ class ControlVisualizations:
         if self.live_plot_obj is not None:
             self.live_plot_obj.graph_p.terminate()
 
-        self.close_running_processes()
-        self.save()
-        self.close_running_processes()
+        #self.close_running_processes()
+        #self.save()
+        #self.close_running_processes()
 
     def init_dynamic_graph(self, env, num_steps):
         if self.visu_config.run_live_graph_parallel_process:
             self.live_plot_obj = LivePlotParallel(num_steps,
                 env.observation_space, env.action_space,
-                step_pred=self.control_config.controller.num_repeat_actions,
+                step_pred=self.num_repeat_actions,
                 use_constraints=bool(self.control_config.reward.use_constraints),
                 state_min=self.control_config.reward.state_min,
                 state_max=self.control_config.reward.state_max)
         else:
             self.live_plot_obj = LivePlotSequential(num_steps,
                 env.observation_space, env.action_space,
-                step_pred=self.control_config.controller.num_repeat_actions,
+                step_pred=self.num_repeat_actions,
                 use_constraints=bool(self.control_config.reward.use_constraints),
                 state_min=self.control_config.reward.state_min,
                 state_max=self.control_config.reward.state_max)

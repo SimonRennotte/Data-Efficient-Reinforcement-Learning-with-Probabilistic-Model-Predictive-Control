@@ -142,7 +142,7 @@ class ProcessControl(gym.Env):
 		return np.array([l_mes, co_mes])
 
 	def render(self, mode='human', close=False):
-		# Render the environment to the screen
+		# Render the environment
 		pass
 
 	def clip_parameters(self, prop_level_max_after_reset=0.9):

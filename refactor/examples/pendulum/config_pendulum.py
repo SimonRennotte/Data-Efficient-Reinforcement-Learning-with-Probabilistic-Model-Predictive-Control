@@ -1,4 +1,4 @@
-from rl_gp_mpc.config_classes.config import Config
+from rl_gp_mpc.config_classes.total_config import Config
 from rl_gp_mpc.config_classes.controller_config import ControllerConfig
 from rl_gp_mpc.config_classes.actions_config import ActionsConfig
 from rl_gp_mpc.config_classes.reward_config import RewardConfig
@@ -8,7 +8,7 @@ from rl_gp_mpc.config_classes.model_config import ModelConfig
 from rl_gp_mpc.config_classes.training_config import TrainingConfig
 
 
-def get_config(action_dim=1, state_dim=3, num_repeat_actions=1, len_horizon=15, include_time_model=False):
+def get_config(len_horizon=15, include_time_model=False):
 	observation_config = ObservationConfig(
 		obs_var_norm = [1e-6, 1e-6, 1e-6]
 	)
@@ -20,46 +20,46 @@ def get_config(action_dim=1, state_dim=3, num_repeat_actions=1, len_horizon=15, 
 		weight_state_terminal=[5, 2, 2], 
 
 		target_action_norm=[0.5], 
-		weight_action=[0.05],
+		weight_action=[0.01],
 
 		exploration_factor=1,
 
 		use_constraints=False,
-		state_min=[-0.1, -0.1, -0.1],
-		state_max=[1.1, 1.1, 1.1],
+		state_min=[-0.1, 0.1, -0.1],
+		state_max=[1.1, 0.9, 1.1],
 		area_multiplier=1, 
+
+		clip_lower_bound_cost_to_0=False,
 	)
 
 	actions_config = ActionsConfig(
 		limit_action_change=False,
-		max_change_action_norm=[0.05],
-		action_dim=action_dim,
-		len_horizon=len_horizon
+		max_change_action_norm=[0.2]
 	)
 
 	model_config = ModelConfig(
 		gp_init = {
-			"noise_covar.noise": [1e-4, 1e-4, 1e-4], # variance = (std)²
-			"base_kernel.lengthscale": [[0.75, 0.75, 0.75, 0.75],
-										[0.75, 0.75, 0.75, 0.75],
-										[0.75, 0.75, 0.75, 0.75]],
+			"noise_covar.noise": [1e-5, 1e-5, 1e-5], # variance = (std)²
+			"base_kernel.lengthscale": [0.3, 0.3, 0.3],
 			"outputscale": [5e-2, 5e-2, 5e-2]
 		},
+		# [[0.75, 0.75, 0.75, 0.75],
+		# [0.75, 0.75, 0.75, 0.75],
+		# [0.75, 0.75, 0.75, 0.75]]
 		min_std_noise=1e-3,
-		max_std_noise=3e-1,
-		min_outputscale=1e-5,
+		max_std_noise=3e-2,
+		min_outputscale=1e-2,
 		max_outputscale=0.95,
 		min_lengthscale=4e-3,
-		max_lengthscale=25.0,
+		max_lengthscale=10.0,
 		min_lengthscale_time=10,
 		max_lengthscale_time=10000,
 		init_lengthscale_time=100,
-		include_time_model=include_time_model,
-		state_dim=state_dim,
-		action_dim=action_dim,
+		include_time_model=include_time_model
 	)
 
 	memory_config = MemoryConfig(
+		check_errors_for_storage=True,
 		min_error_prediction_state_for_memory=[3e-4, 3e-4, 3e-4],
 		min_prediction_state_std_for_memory=[3e-3, 3e-3, 3e-3],
 		points_batch_memory=1500
@@ -76,8 +76,6 @@ def get_config(action_dim=1, state_dim=3, num_repeat_actions=1, len_horizon=15, 
 
 	controller_config = ControllerConfig(
 		len_horizon=len_horizon,
-		num_repeat_actions=num_repeat_actions,
-		clip_lower_bound_cost_to_0=False,
 		actions_optimizer_params = {
 			"disp": None, "maxcor": 4, "ftol": 1e-15, "gtol": 1e-15, "eps": 1e-2, "maxfun": 4,
 			"maxiter": 4, "iprint": -1, "maxls": 4, "finite_diff_rel_step": None

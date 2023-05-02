@@ -9,7 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rl_gp_mpc.control_objects.utils.iteration_info_class import IterationInformation
+from rl_gp_mpc.control_objects.controllers.iteration_info_class import IterationInformation
 
 matplotlib.rc('font', size='6')
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
