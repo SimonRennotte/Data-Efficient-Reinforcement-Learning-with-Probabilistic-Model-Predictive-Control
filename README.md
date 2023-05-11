@@ -28,12 +28,12 @@ The proposed framework demonstrates superior data efficiency and learning rates 
 ---
 
 ## Table of contents
-  * [Results](#results)
-    * [Pendulum-v0](#pendulum-v0)
-    * [MountainCarContinuous-v0](#mountaincarcontinuous-v0)
   * [Usage](#Usage)
     * [Installation](#installation)
     * [How to run](#run)
+  * [Examples](#examples)
+    * [Pendulum-v0](#pendulum-v0)
+    * [MountainCarContinuous-v0](#mountaincarcontinuous-v0)
   * [Resources](#resources)
     * [Brief explanation of the method](#brief-explanation)
     * [Why is this paper important](#why-is-this-paper-important)
@@ -44,11 +44,35 @@ The proposed framework demonstrates superior data efficiency and learning rates 
     * [Papers](#papers)
     * [Textbooks](#textbooks)
     * [Projects](#projects)
+
+<a name="usage"/>
+
+## Usage
+
+<a name="installation"/>
+
+### Installation
+#### Dependencies
+numpy, gym, pytorch, gpytorch, matplotlib, scikit-learn, ffmpeg
+
+#### Run the pendulum example
+Download [anaconda](https://www.anaconda.com/products/individual)
+Open an anaconda prompt window:
+```
+git clone https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
+cd Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
+conda env create -f environment.yml
+conda activate gp_rl_env
+python examples/pendulum/run_pendulum.py
+```
+To apply the method on different gym environments, refer the to /examples folder.
+Note that the control_config object must be defined so that it works for the environment. 
+Some parameters depend on the dimensionality of actions and observations. 
  
 <a name="results"/>
     
-## Results
-For each experiment, two plots allow to see and understand the control. 
+## Examples
+For each experiment, two plots allow to see and understand the control: 
 
 - 2d plots showing the states, actions and costs during control
    - The top graph shows the states along with the predicted states and uncertainty from n time steps earlier. The value of n is specified in the legend. 
@@ -58,13 +82,13 @@ For each experiment, two plots allow to see and understand the control.
 - 3d plots showing the Gaussian processes models and points in memory. 
      In this plot, each of the graphs of the top line represents the change in states for the next step as a function of the current states and actions. 
      The indices represented in the xy axis name represent either states or actions. 
-     For example, the input with index 3 represent the action for the pendulum. Action indices are defined as higher than the state indices.
+     For example, the input with index 3 represents the action for the pendulum. Action indices are defined as higher than the state indices.
      As not every input of the gp can be shown on the 3d graph, 
      the axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales.
      So, the x-y axes may be different for each graph. 
      The graphs of the bottom line represent the predicted uncertainty, and the points are the prediction errors.
      The points stored in the memory of the Gaussian process model are shown in green, 
-     and the points that are not stored because they were too similar to other points already in memory are represented in black.
+     and the points that are not used for the gp predictions because they were too similar to other points already in memory are represented in black.
      
 During the control, a dynamic graph similar to the 2d plot described above allows to see the evolution of the 
 states, action and costs, but also shows the predicted states, actions and costs computed by the model for the MPC. 
@@ -110,7 +134,7 @@ The dynamic graph updated in real-time:
 
 ### MountainCarContinuous-v0
 
-The mountain car problem is different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, the parameter to repeat the actions has been set to 5. For the shown example, 1 control time step corresponds to 5 time steps where the action is held constant. If this trick is not used, the control is not possible, or the computation times become too high.
+The mountain car problem is different in that the number of time steps to plan in order to control the environment is higher. To avoid this problem, the parameter to repeat the actions has been set to 5. For the shown example, 1 control time step corresponds to 5 time steps where the action is held constant.
 
 The mean costs over 10 runs can be seen in the following figure:
 
@@ -138,27 +162,6 @@ The following figures and animation shows an example of control.
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?" width="80%" />
 </p>
 
-<a name="usage"/>
-
-## Usage
-
-<a name="installation"/>
-
-### Installation
-#### Dependencies
-numpy, gym, pytorch, gpytorch, matplotlib, scikit-learn, ffmpeg
-#### Install with anaconda
-
-Download [anaconda](https://www.anaconda.com/products/individual)
-Open an anaconda prompt window:
-```
-git clone https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
-cd Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
-conda env create -f environment.yml
-conda activate gp_rl_env
-python examples/pendulum/run_pendulum.py
-```
-
 <a name="resources"/>
 
 ## Resources
@@ -172,11 +175,11 @@ At each interaction with the real environment, the optimal action is obtained th
 The model is used to evaluate certain actions over a fixed time horizon by simulating the environment. 
 This simulation is used several times with different actions at each interaction with the real world to find the optimal actions in the time horizon window. 
 The first control of the time horizon is then used for the next action in the real world. 
-In traditional control theory, the model is a mathematical model obtained from theory. 
+In traditional control theory, the model is a mathematical model obtained from expert knowledge. 
 Here, the model is a Gaussian process that learns from observed data. 
 
 Gaussian processes are used to predict the change of states as a function of states and actions. 
-The predictions have the form of a distribution, which also allows the uncertainty of these predictions. 
+The predictions are a multidimensional gaussian distribution, which allows to get the uncertainty of these predictions. 
 Gaussian processes are defined by a mean and covariance function, and store previous points (states(t), actions(t), (states(t+1) - states(t))) in memory. 
 To compute new predictions, the covariance between the new points and the points stored in memory is calculated, 
 which allows, with a little mathematics, to get the predicted distribution. 
@@ -185,9 +188,8 @@ Depending on the distance between the new point and the points stored in memory,
 In our case, for each state, one Gaussian process is used which has n (number of states) + m (number of actions) inputs, 
 and 1 output used to predict the variation of that state.
 
-One specificity of the paper is that for this method, 
-uncertainties propagate during trajectory calculations which allows to calculate the uncertainty of the loss in the window of the simulation horizon. 
-This makes it possible to explore more efficiently by rewarding states where the uncertainty of the loss is high. 
+In this paper, the uncertainties propagate during trajectory calculations which allows to calculate the uncertainty of the loss in the window of the simulation horizon. 
+This makes it possible to explore more efficiently by rewarding future states where the uncertainty of the loss is high. 
 It can also be used to get a real-time idea of the model's certainty about the future. 
 Uncertainty can also be used to impose security constraints. 
 This can be done by prohibiting visits to states where the uncertainty is too high by imposing constraints on the lower or upper limit of the state confidence interval. 
@@ -245,7 +247,7 @@ Compared to the implementation in the paper, the scripts have been designed to p
 
 Gaussian processes: https://www.youtube.com/watch?v=92-98SYOdlY&list=PL93aLKqThq4hbACqDja5QFuFKDcNtkPXz&index=2
 
-Presentation of PILCO by Marc Deisenroth: https://www.youtube.com/watch?v=AVdx2hbcsfI (method that uses the same gaussian process model, but without an MPC controller)
+Presentation of PILCO by Marc Deisenroth: https://www.youtube.com/watch?v=AVdx2hbcsfI (method that uses the same gaussian process model, but without a MPC controller)
 
 Safe Bayesian optimization: https://www.youtube.com/watch?v=sMfPRLtrob4
 
