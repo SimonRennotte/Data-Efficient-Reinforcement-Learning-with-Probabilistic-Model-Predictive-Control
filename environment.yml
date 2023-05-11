@@ -3,14 +3,14 @@ channels:
   - defaults
   - pytorch
 dependencies:
-  - python=3
+  - python=3.10
   - pip
-  - numpy=1.19.2
-  - pytorch=1.7.0
-  - cpuonly=1.0
-  - matplotlib=3.3.2
-  - scikit-learn=0.23.2
-  - ffmpeg=4.2.2
+  - numpy=1.24.3
+  - pytorch=2.0.0
+  - cpuonly
+  - matplotlib=3.6
+  - scikit-learn=1.2.2
+  - ffmpeg
   - pip:
     - gym==0.17.3
-    - gpytorch==1.1.1
+    - gpytorch

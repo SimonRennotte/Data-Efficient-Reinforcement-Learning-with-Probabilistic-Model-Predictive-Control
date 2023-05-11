@@ -1,2 +1,4 @@
 .idea
-/folder_save/
+**/folder_save/
+**/__pycache__/
+launch.json

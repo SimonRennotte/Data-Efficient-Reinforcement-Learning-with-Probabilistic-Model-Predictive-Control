@@ -156,30 +156,8 @@ git clone https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning
 cd Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control
 conda env create -f environment.yml
 conda activate gp_rl_env
-python main.py
+python examples/pendulum/run_pendulum.py
 ```
-
-<a name="run"/>
-
-### Run for your gym environment
-
-To run the script using your environment, you must first define it as a gym environment, 
-then create two json files inside the folder params that contains all the parameters relative to the control.
-For an example of such definition, you can look at the custom env defined in the file utils/env_example
-
-- The parameters of the main script are stored in main_parameters_env.json, which specifies:
-    - Which gym environment to use, 
-    - The parameters relative to visualizations. 
-    - The number of runs to perform for the computation of mean losses. 
-        If it is set to 1, the mean losses will not be computed.
-
-- For each gym environment, a json file containing all the parameters relative to this environment for the control used.
-The syntax is parameters_"gym_env_name".json
-
-The plots and animations will be saved in the folder "folder_save", with the following structure:
-folder_save => environment name => time and date of the run
-
-For more information about the parameters, see PARAMETERS.md
 
 <a name="resources"/>
 
