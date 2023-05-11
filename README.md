@@ -91,7 +91,7 @@ For each experiment, two plots allow to see and understand the control:
      and the points that are not used for the gp predictions because they were too similar to other points already in memory are represented in black.
      
 During the control, a dynamic graph similar to the 2d plot described above allows to see the evolution of the 
-states, action and costs, but also shows the predicted states, actions and costs computed by the model for the MPC. 
+states, action and costs in real time. It also shows the predicted states, actions and costs computed by the model for the MPC. 
 The predicted future states, actions and loss are represented with dashed lines, along with their confidence interval (2 standard deviation).
 
 <a name="pendulum-v0"/>
