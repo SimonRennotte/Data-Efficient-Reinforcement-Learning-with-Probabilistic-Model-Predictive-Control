@@ -24,7 +24,7 @@ def get_config(len_horizon=10, num_repeat_actions=5, include_time_model=False,):
 
 		exploration_factor=1,
 
-		use_constraints=True,
+		use_constraints=False,
 		state_min=[0.2, -2],
 		state_max=[0.925, 0.85],
 		area_multiplier=1, 
