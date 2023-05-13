@@ -77,27 +77,21 @@ Some parameters depend on the dimensionality of actions and observations.
 <a name="results"/>
     
 ## Examples
-For each experiment, two plots allow to see and understand the control: 
+In each experiment, two types of plots are available to observe and comprehend the control process:
 
-- 2d plots showing the states, actions and costs during control
-   - The top graph shows the states along with the predicted states and uncertainty from n time steps earlier. The value of n is specified in the legend. 
-   - The middle graph shows the actions
-   - The bottom graph shows the real cost alongside with the predicted trajectory cost, which is the mean of future predicted cost, and its uncertainty.
+- 2D Plots:
+  - The top graph displays the states, along with the predicted states and uncertainty from a specified number of previous time steps. The value of "n" is mentioned in the legend.
+  - The middle graph depicts the actions taken during control.
+  - The bottom graph illustrates the real cost alongside the predicted trajectory cost, which is the mean of future predicted costs, along with its associated uncertainty.
 
-- 3d plots showing the Gaussian processes models and points in memory. 
-     In this plot, each of the graphs of the top line represents the change in states for the next step as a function of the current states and actions. 
-     The indices represented in the xy axis name represent either states or actions. 
-     For example, the input with index 3 represents the action for the pendulum. Action indices are defined as higher than the state indices.
-     As not every input of the gp can be shown on the 3d graph, 
-     the axes of the 3d graph are chosen to represent the two inputs (state or action) with the smallest lengthscales.
-     So, the x-y axes may be different for each graph. 
-     The graphs of the bottom line represent the predicted uncertainty, and the points are the prediction errors.
-     The points stored in the memory of the Gaussian process model are shown in green, 
-     and the points that are not used for the gp predictions because they were too similar to other points already in memory are represented in black.
-     
-During the control, a dynamic graph similar to the 2d plot described above allows to see the evolution of the 
-states, action and costs in real time. It also shows the predicted states, actions and costs computed by the model for the MPC. 
-The predicted future states, actions and loss are represented with dashed lines, along with their confidence interval (2 standard deviation).
+- 3D Plots:
+  - These plots showcase the Gaussian process models and the stored data points.
+  - Each graph in the top row represents the change in states for the next step based on the current states and actions.
+  - The indices on the x and y axes denote the states or actions being represented. For example, an index of 3 corresponds to the action for the pendulum. Actions have higher indices than states.
+  - Since it's not feasible to display every input of the Gaussian process on the 3D graph, the axes are chosen to represent the two inputs (state or action) with the smallest lengthscales. Hence, the x-y axes may differ for each graph.
+  - The graphs in the bottom row demonstrate the predicted uncertainty, while the data points represent prediction errors. Points stored in the memory of the Gaussian process model are depicted in green, while points that were not used for Gaussian process predictions due to their similarity to existing points in memory are shown in black.
+
+During the control process, a dynamic graph, similar to the 2D plot described earlier, provides real-time visualization of the evolving states, actions, and costs. It also displays the predicted states, actions, and costs computed by the model for the Model Predictive Control (MPC). The predicted future states, actions, and costs are represented by dashed lines, accompanied by their confidence intervals (2 standard deviations).
 
 <a name="pendulum-v0"/>
 
@@ -114,7 +108,7 @@ As a comparison, the state of the art of model free reinforcement learning algor
 The following figures and animation shows an example of control.
 
 <p align="middle">
-  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_pendulum.gif?" width="80%" />
+  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?" width="80%" />
 </p>
 
 The following figure shows the 2d graphs for the inverted pendulum that is shown in the animation.
@@ -129,11 +123,6 @@ And the gaussian process models and the points in memory:
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true" width="80%" />
 </p>
 
-The dynamic graph updated in real-time:
-
-<p align="middle">
-  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?" width="80%" />
-</p>
 
 <a name="mountaincarcontinuous-v0"/>
 
@@ -152,7 +141,7 @@ As for the pendulum, the optimal control is obtained in very few steps compared 
 The following figures and animation shows an example of control.
 
 <p align="middle">
-  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_mountain_car.gif?" width="80%" />
+  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?" width="80%" />
 </p>
 
 <p align="middle">
@@ -163,9 +152,6 @@ The following figures and animation shows an example of control.
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_mountain_car.png?raw=True" width="80%" />
 </p>
 
-<p align="middle">
-  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?" width="80%" />
-</p>
 
 <a name="process_control"/>
 
