@@ -2,6 +2,7 @@ import torch
 
 from rl_gp_mpc.config_classes.reward_config import RewardConfig
 from .abstract_state_reward_mapper import AbstractStateRewardMapper
+from ..utils.pytorch_utils import normal_cdf
 
 
 class SetpointStateRewardMapper(AbstractStateRewardMapper):
@@ -56,21 +57,13 @@ class SetpointStateRewardMapper(AbstractStateRewardMapper):
 
 		if self.config.use_constraints:
 			if state_mu.ndim == 2:
-				state_distribution = [torch.distributions.normal.Normal(state_mu[idx], state_var[idx]) for idx in
-					range(state_mu.shape[0])]
-				penalty_min_constraint = torch.stack([state_distribution[time_idx].cdf(torch.Tensor(
-					self.config.state_min)) * self.config.area_multiplier for
-					time_idx in range(state_mu.shape[0])]).diagonal(0, -1, -2).sum(-1)
-				penalty_max_constraint = torch.stack([(1 - state_distribution[time_idx].cdf(torch.Tensor(
-					self.config.state_max))) * self.config.area_multiplier for
-					time_idx in range(state_mu.shape[0])]).diagonal(0, -1, -2).sum(-1)
+				penalty_min_constraint = torch.stack([normal_cdf(self.config.state_min, state_mu[time_idx], state_var[time_idx].diag()) for time_idx in range(state_mu.shape[0])])
+				penalty_max_constraint = torch.stack([1 - normal_cdf(self.config.state_max, state_mu[time_idx], state_var[time_idx].diag()) for time_idx in range(state_mu.shape[0])])
 			else:
-				state_distribution = torch.distributions.normal.Normal(state_mu, state_var)
-				penalty_min_constraint = ((state_distribution.cdf(torch.Tensor(
-					self.config.state_min))) * self.config.area_multiplier).diagonal(0, -1, -2).sum(-1)
-				penalty_max_constraint = ((1 - state_distribution.cdf(
-					torch.Tensor(self.config.state_max))) * self.config.area_multiplier).diagonal(0, -1, -2).sum(-1)
-			cost_mu = cost_mu + penalty_max_constraint + penalty_min_constraint
+				penalty_min_constraint = normal_cdf(self.config.state_min, state_mu, state_var.diag())
+				penalty_max_constraint = 1 - normal_cdf(self.config.state_max, state_mu, state_var.diag())
+
+			cost_mu = cost_mu + penalty_max_constraint.sum(-1) + penalty_min_constraint.sum(-1)
 
 		return -cost_mu, cost_var
 

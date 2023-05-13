@@ -34,6 +34,11 @@ The proposed framework demonstrates superior data efficiency and learning rates 
   * [Examples](#examples)
     * [Pendulum-v0](#pendulum-v0)
     * [MountainCarContinuous-v0](#mountaincarcontinuous-v0)
+    * [ProcessControl](#process_control)
+    * [Advanced functionalities](#advanced_functionalities)
+        * [States contraints](#states_constraints)
+        * [Actions change limitation](#actions_change_limitation)
+        * [Time varying model](#time_varying_model)
   * [Resources](#resources)
     * [Brief explanation of the method](#brief-explanation)
     * [Why is this paper important](#why-is-this-paper-important)
@@ -160,6 +165,76 @@ The following figures and animation shows an example of control.
 
 <p align="middle">
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?" width="80%" />
+</p>
+
+<a name="process_control"/>
+
+### Process Control
+
+To assess control performance in the presence of noise, multiple actions, and time-varying parameters, a custom gym environment has been created. 
+This environment simulates a straightforward process control scenario involving the regulation of a level and concentration within a tank.
+
+For detailed information about the environment, please refer to the file located in the /envs/ folder.
+
+The control is represented in the following animation:
+
+<p align="middle">
+  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_process_control_base.gif?" width="80%" />
+</p>
+
+<a name="advanced_functionalities"/>
+
+## Advanced functionalities
+
+<a name="states_constraints"/>
+
+###  MountainCarContinuous-v0 with states constraints
+
+The predicted future states can be accessed within the object during each control iteration. 
+This means the future distribution can be used to set constraints on the states.
+In this case, the penalties have been added for states that fall outside an allowed region.
+
+To illustrate control with constraints, an example is provided below using the mountain car scenario. 
+The graph displays the permissible boundaries indicated by dotted lines.
+
+The following constraints have been added:
+  - The car is not allowed to reach the top but must stay on the clif.
+  - The maximum speed of the car is limited
+  - The car can't go too much left 
+
+<p align="middle">
+  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/mountaincar_constraints-2023-05-13_13.23.24_adjusted.gif?" width="80%" />
+</p>
+
+The control is reached with few violations of the constraints while still optimizing the cost function.
+
+<a name="actions_change_limitation"/>
+
+### Process control: Limiting the action changes
+
+By changing the way that the optimized actions are defined, it is possible to limit the changes of actions.
+
+The following animation represents an example of this functionality for the process control environment.
+
+<p align="middle">
+  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_process_control_actionschange.gif" width="80%" />
+</p>
+
+<a name="time_varying_model"/>
+
+### Process control: Time varying parameters and model
+
+In the previous examples, the model assumed a static environment without any changes over time.
+
+However, by introducing an extra input to the model that represents the iteration time, we can assign more significance to recent data points. This enables the model to adapt to changes in the environment as time progresses.
+
+The learned time lengthscale provides insight into the pace at which the environment evolves.
+
+To illustrate this functionality, an animation is presented for the process control environment. 
+In this animation, the parameters changes every 200 timesteps.
+
+<p align="middle">
+  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/anim_process_control_timevarying.gif" width="80%" />
 </p>
 
 <a name="resources"/>

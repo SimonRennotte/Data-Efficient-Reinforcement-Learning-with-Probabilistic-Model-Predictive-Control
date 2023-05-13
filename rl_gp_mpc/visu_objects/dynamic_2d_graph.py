@@ -6,6 +6,7 @@ import multiprocessing
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import imageio
 
 from rl_gp_mpc.control_objects.controllers.iteration_info_class import IterationInformation
 
@@ -20,7 +21,8 @@ FONTSIZE = 6
 
 class LivePlotParallel:
 	def __init__(self, num_steps_total, dim_states, dim_actions, use_constraints=False,
-			state_min=None, state_max=None, time_between_updates=0.75, use_thread=False):
+			state_min=None, state_max=None, time_between_updates=0.75, use_thread=False,
+			path_save="control_animation.gif", save=False):
 		self.use_thread = use_thread
 
 		if use_thread:
@@ -28,13 +30,13 @@ class LivePlotParallel:
 			self.graph_p = threading.Thread(target=anim_plots_2d_p,
 									args=(self.pqueue, num_steps_total, dim_states,
 										dim_actions, use_constraints,
-										state_min, state_max, time_between_updates))
+										state_min, state_max, time_between_updates, path_save, save))
 		else:
 			self.pqueue = multiprocessing.Queue()
 			self.graph_p = multiprocessing.Process(target=anim_plots_2d_p,
 									args=(self.pqueue, num_steps_total, dim_states,
 											dim_actions, use_constraints,
-											state_min, state_max, time_between_updates))
+											state_min, state_max, time_between_updates, path_save, save))
 		self.graph_p.start()
 
 	def update(self, state, action, cost, iter_info:IterationInformation=None):
@@ -64,8 +66,8 @@ class LivePlotParallel:
 			self.close()
 
 
-def anim_plots_2d_p(queue, num_steps_total, dim_states, dim_actions, use_constraints=False, state_min=None, state_max=None, time_between_updates=0.5):
-	fig, axes = plt.subplots(nrows=3, figsize=(6, 5), sharex=True)
+def anim_plots_2d_p(queue, num_steps_total, dim_states, dim_actions, use_constraints=False, state_min=None, state_max=None, time_between_updates=0.5, path_save="control_animation.gif", save=False):
+	fig, axes = plt.subplots(nrows=3, figsize=(10, 6), sharex=True)
 	axes[0].set_title('Normed states and predictions')
 	axes[1].set_title('Normed actions')
 	axes[2].set_title('Cost and horizon cost')
@@ -123,6 +125,8 @@ def anim_plots_2d_p(queue, num_steps_total, dim_states, dim_actions, use_constra
 	num_pts_show = 0
 	last_update_time = time.time()
 	exit_loop = False
+	if save:
+		writer = imageio.get_writer(path_save, mode='I')
 	while True:
 		if exit_loop: break
 		if (time.time() - last_update_time) > time_between_updates:
@@ -243,8 +247,14 @@ def anim_plots_2d_p(queue, num_steps_total, dim_states, dim_actions, use_constra
 					ax.autoscale_view(True, True, True)
 
 				fig.canvas.draw()
+				if save:
+					image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+					image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+					# Append the image to the animation
+					writer.append_data(image)
 				plt.pause(0.01)
 		time.sleep(0.05)
+	if save: writer.close()
 	plt.close('all')
 
 

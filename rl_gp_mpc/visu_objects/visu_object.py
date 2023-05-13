@@ -1,6 +1,7 @@
 import os
 import multiprocessing
 import copy
+import time
 
 import numpy as np
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
@@ -38,6 +39,8 @@ class ControlVisualizations:
         self.action_min = env.action_space.low
         self.action_max = env.action_space.high
 
+        self.init = True
+
         if self.visu_config.render_live_plot_2d:
             self.live_plot_obj = LivePlotParallel(num_steps,
                 use_constraints=bool(self.control_config.reward.use_constraints),
@@ -45,7 +48,9 @@ class ControlVisualizations:
                 dim_actions=len(self.action_min),
                 state_min=self.control_config.reward.state_min,
                 state_max=self.control_config.reward.state_max,
-                use_thread=self.use_thread)
+                use_thread=self.use_thread,
+                path_save=os.path.join(self.folder_save, 'control_animation.mp4'),
+                save=self.visu_config.save_live_plot_2d)
 
         if self.visu_config.save_render_env:
             self.rec = VideoRecorder(env, path=os.path.join(self.folder_save, 'gym_animation.mp4'))
@@ -66,6 +71,9 @@ class ControlVisualizations:
         if self.visu_config.render_live_plot_2d:
             self.live_plot_obj.update(state=state, action=action_norm, cost=-reward, iter_info=iter_info_arrays)
         self.env_render_step(env)
+        if self.init:
+            time.sleep(2)
+            self.init = False
 
     def env_render_step(self, env):
         if self.visu_config.render_env:

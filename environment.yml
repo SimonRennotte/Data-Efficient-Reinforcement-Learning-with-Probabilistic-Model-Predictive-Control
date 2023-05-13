@@ -10,7 +10,9 @@ dependencies:
   - cpuonly
   - matplotlib=3.6
   - scikit-learn=1.2.2
+  - imageio=2.26.0
   - ffmpeg
   - pip:
     - gym==0.17.3
     - gpytorch
+    - imageio[ffmpeg]
