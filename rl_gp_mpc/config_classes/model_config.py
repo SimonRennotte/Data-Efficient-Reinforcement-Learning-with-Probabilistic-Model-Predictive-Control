@@ -22,6 +22,12 @@ class ModelConfig:
 		max_lengthscale_time:float=10000, 
 		include_time_model:bool=False,
 	):
+		"""
+		include_time_model: if set to true, the time of the observation (index of control) will be an additional contextual input to the model, which will allow to weight recent points more in the case that the environment changes over time
+		gp_init: dict containing the initialization of the gp model parameters. The dimension are the number of observation, since there is 1 model per state/observation. Lengthcales dimensions are (No, No+Na). No: numver of ovservations, Na: number of actions
+		All parameters are for normalized observations expect for the time lengthscales
+		The noise parameter represents the noise variance. Take the sqrt to get the corresponding std.
+		"""
 		self.include_time_model = include_time_model
 
 		self.min_std_noise = min_std_noise

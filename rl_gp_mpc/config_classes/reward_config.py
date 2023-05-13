@@ -16,6 +16,22 @@ class RewardConfig:
 		area_multiplier:float=1, 
 		clip_lower_bound_cost_to_0:bool=False
 	):
+		"""
+		target_state_norm: target states. The cost relative to observations will be 0 if the normalized observations match this. Dim=No
+		weight_state: target states. The weight attributed to each observation. Dim=No
+		weight_state_terminal. The weight attributed to each observation at the end of the prediction horizon. Dim=No
+		target_action_norm: Target actions. The cost relative to actions will be 0 if the nromalized actions match this. Dim=Na
+		weight_action: weight attributed for each action in the cost. Dim=Na
+		exploration_factor: bonus attributed to the uncertainty of the predicted cost function. 
+		use_constraints: if set to True, constraints for states will be used for the cost function
+		state_min: minimum bound of the constraints for the normalized observation if use-constraints is True. Dim=No
+		state_max: maximum bound of the constraints for the normalized observation if use-constraints is True. Dim=No
+		area_multiplier: When including constraints in the cost function. The area of the predicted states outside the allowed region is used as penalty. This parameter multiply this area to adjust the effect of constraints on the cost
+		clip_lower_bound_cost_to_0: if set to True, the cost will be clipped to 0. Should always be False
+
+		Na: dimension of the env actions
+		No: dimension of the env observations
+		"""
 		self.target_state_norm = target_state_norm
 		self.weight_state = weight_state
 		self.weight_state_terminal = weight_state_terminal

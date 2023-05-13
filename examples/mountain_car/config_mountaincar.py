@@ -22,11 +22,11 @@ def get_config(len_horizon=10, num_repeat_actions=5, include_time_model=False,):
 		target_action_norm=[0.5], 
 		weight_action=[0.05],
 
-		exploration_factor=0.5,
+		exploration_factor=1,
 
-		use_constraints=False,
-		state_min=[0.1, -0.1],
-		state_max=[1.1, 1.1],
+		use_constraints=True,
+		state_min=[0.2, -2],
+		state_max=[0.925, 0.85],
 		area_multiplier=1, 
 
 		clip_lower_bound_cost_to_0=False,
@@ -39,12 +39,12 @@ def get_config(len_horizon=10, num_repeat_actions=5, include_time_model=False,):
 
 	model_config = ModelConfig(
 		gp_init = {
-            "noise_covar.noise": [1e-4, 1e-4],
+            "noise_covar.noise": [1e-5, 1e-5],
             "base_kernel.lengthscale": [0.5, 0.5],
             "outputscale": [5e-2, 5e-2]
 		},
 		min_std_noise=1e-3,
-		max_std_noise=3e-1,
+		max_std_noise=1e-2,
 		min_outputscale=1e-5,
 		max_outputscale=0.95,
 		min_lengthscale=4e-3,

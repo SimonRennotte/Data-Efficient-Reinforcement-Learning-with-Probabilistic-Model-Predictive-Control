@@ -20,21 +20,21 @@ def get_config(len_horizon=15, include_time_model=False, num_repeat_actions=1):
 		weight_state_terminal=[5, 2, 2], 
 
 		target_action_norm=[0.5], 
-		weight_action=[0.01],
+		weight_action=[1e-3],
 
-		exploration_factor=2,
+		exploration_factor=1,
 
 		use_constraints=False,
-		state_min=[-0.1, 0.1, -0.1],
-		state_max=[1.1, 0.9, 1.1],
+		state_min=[-3, -3, -3],
+		state_max=[3, 3, 3],
 		area_multiplier=1, 
 
 		clip_lower_bound_cost_to_0=False,
 	)
 
 	actions_config = ActionsConfig(
-		limit_action_change=False,
-		max_change_action_norm=[0.2]
+		limit_action_change=True,
+		max_change_action_norm=[0.3]
 	)
 
 	model_config = ModelConfig(
@@ -47,7 +47,7 @@ def get_config(len_horizon=15, include_time_model=False, num_repeat_actions=1):
 		# [0.75, 0.75, 0.75, 0.75],
 		# [0.75, 0.75, 0.75, 0.75]]
 		min_std_noise=1e-3,
-		max_std_noise=3e-2,
+		max_std_noise=1e-2,
 		min_outputscale=1e-2,
 		max_outputscale=0.95,
 		min_lengthscale=4e-3,

@@ -8,6 +8,14 @@ class TrainingConfig:
 		print_train:bool=False,
 		step_print_train:int=5
 	):
+		"""
+		lr_train: learning rate when training the hyperparameters of the model
+		iter_train: number of iteration when training the model
+		training_frequency: the model will be trained periodically. The interval in number of control iteration is this parameter
+		clip_grad_value: if the gradient is above this number, it will be clipped to that number. Allows for better stability
+		print_train: if set to true, will print the training loop information
+		step_print_train: if print_train is true, will print the info every step_print_train of the training iterations
+		"""
 		self.lr_train = lr_train
 		self.iter_train = iter_train
 		self.training_frequency = training_frequency
