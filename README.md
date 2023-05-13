@@ -105,7 +105,7 @@ The following figure shows the mean cost over 10 runs:
 We can see that the model allows to control the environment in less than hundred interactions with the environment.
 As a comparison, the state of the art of model free reinforcement learning algorithms in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment.
 
-The following figures and animation show an example of control.
+The following animation shows an example of control.
 
 <p align="middle">
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?" width="80%" />
@@ -131,8 +131,6 @@ The mean costs over 10 runs can be seen in the following figure:
 </p>
 
 As for the pendulum, the optimal control is obtained in very few steps compared to the state of the art of model-free reinforcement agents
-
-The following figures and animation shows an example of control.
 
 <p align="middle">
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?" width="80%" />
