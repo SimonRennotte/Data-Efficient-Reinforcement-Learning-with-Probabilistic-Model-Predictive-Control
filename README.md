@@ -102,22 +102,16 @@ The following figure shows the mean cost over 10 runs:
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/Cost_runs_Pendulum-v0.png?" width="80%" />
 </p>
 
-We can see that the model allows to control the environment in less than hundred interactions with the environment from scratch.
+We can see that the model allows to control the environment in less than hundred interactions with the environment.
 As a comparison, the state of the art of model free reinforcement learning algorithms in https://github.com/quantumiracle/SOTA-RL-Algorithms solves the problem in more than 15 episodes of 200 interactions with the environment.
 
-The following figures and animation shows an example of control.
+The following figures and animation show an example of control.
 
 <p align="middle">
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_Pendulum-v0.gif?" width="80%" />
 </p>
 
-The following figure shows the 2d graphs for the inverted pendulum that is shown in the animation.
-
-<p align="middle">
-  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_pendulum.png?raw=true" width="80%" />
-</p>
-
-And the gaussian process models and the points in memory:
+And the gaussian process models and points in memory:
 
 <p align="middle">
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/model_pendulum.png?raw=true" width="80%" />
@@ -142,10 +136,6 @@ The following figures and animation shows an example of control.
 
 <p align="middle">
   <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/control_anim_MountainCarContinuous-v0.gif?" width="80%" />
-</p>
-
-<p align="middle">
-  <img src="https://github.com/SimonRennotte/Data-Efficient-Reinforcement-Learning-with-Probabilistic-Model-Predictive-Control/blob/master/images/history_mountain_car.png?raw=True" width="80%" />
 </p>
 
 <p align="middle">
