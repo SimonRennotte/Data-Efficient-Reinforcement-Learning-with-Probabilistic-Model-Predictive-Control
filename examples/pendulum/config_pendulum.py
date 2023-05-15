@@ -33,7 +33,7 @@ def get_config(len_horizon=15, include_time_model=False, num_repeat_actions=1):
 	)
 
 	actions_config = ActionsConfig(
-		limit_action_change=True,
+		limit_action_change=False,
 		max_change_action_norm=[0.3]
 	)
 

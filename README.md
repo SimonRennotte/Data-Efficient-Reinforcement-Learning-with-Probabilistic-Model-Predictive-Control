@@ -36,7 +36,7 @@ The proposed framework demonstrates superior data efficiency and learning rates 
     * [MountainCarContinuous-v0](#mountaincarcontinuous-v0)
     * [ProcessControl](#process_control)
     * [Advanced functionalities](#advanced_functionalities)
-        * [States contraints](#states_constraints)
+        * [States constraints](#states_constraints)
         * [Actions change limitation](#actions_change_limitation)
         * [Time varying model](#time_varying_model)
   * [Resources](#resources)
@@ -219,7 +219,7 @@ In this animation, the parameters changes every 200 timesteps.
 
 ### Brief explanation of the method
 The approach uses a model to control the environment. 
-This family of methods are called Model Predictive Control (MPC). 
+This family of methods is called Model Predictive Control (MPC). 
 At each interaction with the real environment, the optimal action is obtained through an iterative approach. 
 The model is used to evaluate certain actions over a fixed time horizon by simulating the environment. 
 This simulation is used several times with different actions at each interaction with the real world to find the optimal actions in the time horizon window. 
@@ -253,7 +253,7 @@ which opens up many possibilities for Reinforcement Learning in new applications
 ### Why is this paper important?
 Currently, real-world applications of model-free reinforcement learning algorithms are limited due to the number of interactions they require with the environment.
 
-With all the limitations that this method presents, it shows that for the applications on which it can be used, the same results as for state-of-the-art model-free algorithms (to the extent of my knowledge) can be obtained with approximately 20 times less interaction with the environment.
+This method shows that for the applications on which it can be used, the same results as for state-of-the-art model-free algorithms (to the extent of my knowledge) can be obtained with approximately 20 times less interaction with the environment.
 
 Understanding the reasons of this increased efficiency would open the search for algorithms with the same improvement in sample efficiency but without the limitations of this method.
 
@@ -273,7 +273,7 @@ If future research removes the limitations of this method, this type of data eff
 #### Implementation differences from the paper
 
 Compared to the implementation in the paper, the scripts have been designed to perform the control over a long time without any reset, which means :
-- The optimized function in the mpc is the lower confidence bound of the expected long-term cost to reward exploration and avoid getting stuck in a local minimum.
+- The optimized function in the MPC is the lower confidence bound of the expected long-term cost to reward exploration and avoid getting stuck in a local minimum.
 - The environment is not reset, learning is done in one go. Thus, the hyper-parameters training can not be done between trials. The learning of the hyperparameters and the storage of the visualizations are performed in a parallel process at regular time intervals in order to minimize the computation time at each control iteration.
 - The optimizer for actions is LBFGS
 - An option has been added to decide to include a point in the model memory depending on the prediction error at that point and the predicted uncertainty to avoid having too many points in memory. Only points with a predicted uncertainty or a prediction error greater than a threshold are stored in memory.
